@@ -256,6 +256,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
         last_speaker = this_speaker
 
     filename=args.outdir +'/'+ 'src-'+indicator+'_v'+args.version+'.txt'
+    data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
 
