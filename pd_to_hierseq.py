@@ -188,8 +188,8 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
     speaker = []
     all_speaker = []
 
-    with open('prob_dict.json', 'r') as f:
-        prob_dict = json.load(f)
+    #with open('prob_dict.json', 'r') as f:
+    #    prob_dict = json.load(f)
     #print(prob_dict)
 
     for i in range(len(data1)):
