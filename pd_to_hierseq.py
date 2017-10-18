@@ -218,7 +218,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
             #context = context + ' ' + c_utt
             context.append(c_utt)
             turns.append(utter_n)
-            speaker.append(this_speaker)
+            speaker.append(int(this_speaker))
 
         if this_speaker == True:
             a_utt = agent_begin_symbol + utt + agent_end_symbol
