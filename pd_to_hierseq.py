@@ -176,7 +176,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
 
     utter_n = 0
     old_id = -1 #data1.iloc[0]['conversationid']
-    last_speaker = data1.iloc[0]['eventflagfromrep']
+    last_speaker = int(data1.iloc[0]['eventflagfromrep'])
 
     #a_utt = ''
     #c_utt = ''
@@ -195,7 +195,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
     for i in range(len(data1)):
         #print(i)
         new_id = data1.iloc[i]['conversationid']
-        this_speaker = data1.iloc[i]['eventflagfromrep']
+        this_speaker = int(data1.iloc[i]['eventflagfromrep'])
         text = data1.iloc[i]['text']
         utt = preclean_text(text.lower())
         if len(utt.split(' '))> MAX_wps:
@@ -218,7 +218,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
             #context = context + ' ' + c_utt
             context.append(c_utt)
             turns.append(utter_n)
-            speaker.append(int(this_speaker))
+            speaker.append(this_speaker)
 
         if this_speaker == True:
             a_utt = agent_begin_symbol + utt + agent_end_symbol
