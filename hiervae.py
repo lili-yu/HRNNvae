@@ -2,8 +2,8 @@ from __future__ import division
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence as pack
-from torch.nn.utils.rnn import pad_packed_sequence as unpack
+#from torch.nn.utils.rnn import pack_padded_sequence as pack
+#from torch.nn.utils.rnn import pad_packed_sequence as unpack
 import onmt
 from onmt.Utils import aeq
 import sys
@@ -11,33 +11,23 @@ import numpy as np
 
 
 ################################################# Encoder  #################################################
-class HierEncoder(nn.Module):
+class wordEncoder(nn.Module):
 
     def __init__(self, rnn_type, bidirectional, num_layers,
                  hidden_size, dropout, embeddings, z_size):
-        super(HierEncoder, self).__init__()
+        super(wordEncoder, self).__init__()
 
         num_directions = 2 if bidirectional else 1
         assert hidden_size % num_directions == 0
         hidden_size = hidden_size // num_directions
         self.embeddings = embeddings
-        self.no_pack_padded_seq = False
-        self.varcoeff = 0.0
-        self.varstep = 0.1
 
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
-            self.no_pack_padded_seq = True
             self.wordrnn = onmt.SRU(
                     input_size=embeddings.embedding_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
-                    dropout=dropout,
-                    bidirectional=bidirectional)
-            self.convrnn = onmt.SRU(
-                    input_size=hidden_size,
-                    hidden_size=hidden_size_2,
-                    num_layers=num_layers_2,
                     dropout=dropout,
                     bidirectional=bidirectional)
         else:
@@ -47,14 +37,7 @@ class HierEncoder(nn.Module):
                     num_layers=num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
-            self.convrnn = getattr(nn, rnn_type)(
-                    input_size=hidden_size,
-                    hidden_size=hidden_size_2,
-                    num_layers=num_layers_2,
-                    dropout=dropout,
-                    bidirectional=bidirectional)
 
-        self.h2z = nn.Linear(hidden_size, z_size * 2)
 
     def forward(self, input, lengths=None, hidden=None):
         """
@@ -72,98 +55,43 @@ class HierEncoder(nn.Module):
         emb = self.embeddings(input)
         s_len, batch, emb_dim = emb.size()
 
-        packed_emb = emb
-        if lengths is not None and not self.no_pack_padded_seq:
-            # Lengths data is wrapped inside a Variable.
-            lengths = lengths.view(-1).tolist()
-            packed_emb = pack(emb, lengths)
-
-        outputs_WORD, hidden_t = self.rnn(packed_emb, hidden)
-
-        if lengths is not None and not self.no_pack_padded_seq:
-            outputs = unpack(outputs)[0]
-
-        hidden_sent = hidden_t[-1]
-
-
-        outputs_sent, hidden_t_sent = self.rnn(outputs_WORD, hidden_sent )
-
-
-        #new_h = [torch.cat([hidden_t[i][0:h.size(0):2], hidden_t[i][1:h.size(0):2]], 2) for i in range(len(hidden_t))]
-        hh = hidden_t[0] #in LSTM, hidden_t[0] is hidden states, while hidden_t[1] is cell states
-        #hh.size(), num_layers * num_directions, batch, hidden_size
-        hhh = torch.mean(hh,0)
-
-
-        ps = self.h2z(hhh)
-        mu, logvar = torch.chunk(ps, 2, dim=1)
-        z = self.sample(mu, logvar)
-
-        #return hidden_t, outputs
-        #return mu, logvar, z, hidden_t, outputs
-        return outputs, z,  mu, logvar
-
-    def sample(self, mu, logvar):
-        #print(mu.size())
-        #print(logvar.size())
-        eps = Variable(torch.randn(logvar.size())).cuda() #.cuda()
-        #eps = eps.cuda()
-        std = torch.exp(logvar / 2.0)
-        #print(eps.data.type())
-        #print(std.data.type())
-        z = mu + eps*std*self.varcoeff
-        #print(z.size())
-        return z #torch.mm(eps ,std)
-
-    def Varianceanneal(self):
-        if self.varcoeff <=1:
-            self.varcoeff += self.varstep
-            print(("Encoder variation scaling change to: %6.3f") %(self.varcoeff))
+        outputs, hidden_t = self.wordrnn(emb, hidden)
+        return hidden_t, outputs
 
 
 
-
-
-class VaeEncoder(nn.Module):
-    """ The standard RNN encoder. """
-    def _check_args(self, input, lengths=None, hidden=None):
-        s_len, n_batch, n_feats = input.size()
-        if lengths is not None:
-            n_batch_, = lengths.size()
-            aeq(n_batch, n_batch_)
+class ConvEncoder(nn.Module):
 
     def __init__(self, rnn_type, bidirectional, num_layers,
                  hidden_size, dropout, embeddings, z_size):
-        super(VaeEncoder, self).__init__()
+        super(ConvEncoder, self).__init__()
 
         num_directions = 2 if bidirectional else 1
         assert hidden_size % num_directions == 0
         hidden_size = hidden_size // num_directions
-        self.embeddings = embeddings
-        self.no_pack_padded_seq = False
-        self.varcoeff = 0.0
-        self.varstep = 0.1
 
+        self.wordrnn = wordEncoder(rnn_type, bidirectional, num_layers, hidden_size, dropout, embeddings)
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
-            self.no_pack_padded_seq = True
-            self.rnn = onmt.SRU(
+            self.convrnn = onmt.SRU(
                     input_size=embeddings.embedding_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
         else:
-            self.rnn = getattr(nn, rnn_type)(
+            self.convrnn = getattr(nn, rnn_type)(
                     input_size=embeddings.embedding_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
-
         self.h2z = nn.Linear(hidden_size, z_size * 2)
 
-    def forward(self, input, lengths=None, hidden=None):
+        self.varcoeff = 0.0
+        self.varstep = 0.1
+
+    def forward(self, input, lengths=None, state_word=None, hidden_sent=None):
         """
         Args:
             input (LongTensor): len x batch x nfeat.
@@ -175,27 +103,21 @@ class VaeEncoder(nn.Module):
             outputs (FloatTensor):  len x batch x rnn_size -  Memory bank
         """
         """ See EncoderBase.forward() for description of args and returns."""
-        self._check_args(input, lengths, hidden)
+        max_sents, batch_size, max_tokens = input.size()
+        s = None
+        for i in xrange(max_sents):
+            _s, state_word = self.wordrnn(input[i,:,:].transpose(0,1), state_word)
+            if(s is None):
+                s = _s
+            else:
+                s = torch.cat((s,_s),0)      
 
-        emb = self.embeddings(input)
-        s_len, batch, emb_dim = emb.size()
-
-        packed_emb = emb
-        if lengths is not None and not self.no_pack_padded_seq:
-            # Lengths data is wrapped inside a Variable.
-            lengths = lengths.view(-1).tolist()
-            packed_emb = pack(emb, lengths)
-
-        outputs, hidden_t = self.rnn(packed_emb, hidden)
-
-        if lengths is not None and not self.no_pack_padded_seq:
-            outputs = unpack(outputs)[0]
+        outputs_sent, hidden_sent  = self.convrnn(s, hidden_sent )
 
         #new_h = [torch.cat([hidden_t[i][0:h.size(0):2], hidden_t[i][1:h.size(0):2]], 2) for i in range(len(hidden_t))]
-        hh = hidden_t[0] #in LSTM, hidden_t[0] is hidden states, while hidden_t[1] is cell states
+        hh = hidden_sent [0] #in LSTM, hidden_t[0] is hidden states, while hidden_t[1] is cell states
         #hh.size(), num_layers * num_directions, batch, hidden_size
         hhh = torch.mean(hh,0)
-
 
         ps = self.h2z(hhh)
         mu, logvar = torch.chunk(ps, 2, dim=1)
@@ -211,8 +133,6 @@ class VaeEncoder(nn.Module):
         eps = Variable(torch.randn(logvar.size())).cuda() #.cuda()
         #eps = eps.cuda()
         std = torch.exp(logvar / 2.0)
-        #print(eps.data.type())
-        #print(std.data.type())
         z = mu + eps*std*self.varcoeff
         #print(z.size())
         return z #torch.mm(eps ,std)
@@ -417,7 +337,8 @@ class VaeModel(nn.Module):
 
 ################################################# make_function  #################################################
 
-def make_base_model(model_opt, fields, gpu, checkpoint=None):
+
+def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     """
     Args:
         model_opt: the option loaded from checkpoint.
@@ -429,40 +350,23 @@ def make_base_model(model_opt, fields, gpu, checkpoint=None):
         the NMTModel.
     """
     # Make encoder.
-    src_dict = fields["src"].vocab
-    feature_dicts = ONMTDataset.collect_feature_dicts(fields)
-    src_embeddings = make_embeddings(model_opt, src_dict,
-                                     feature_dicts)
+    src_embeddings = modules.EmbeddingLayer(
+        embedding_dim, src_dict,
+        embs = dataloader.load_embedding(args.embedding))
     encoder = make_encoder(model_opt, src_embeddings)
 
 
     # Make decoder.
-    tgt_dict = fields["tgt"].vocab
-    # TODO: prepare for a future where tgt features are possible.
-    feature_dicts = []
-    tgt_embeddings = make_embeddings(model_opt, tgt_dict,
-                                     feature_dicts, for_encoder=False)
+    src_embeddings = modules.EmbeddingLayer(
+        embedding_dim, tgt_dict,
+        embs = dataloader.load_embedding(args.embedding))
     decoder = make_decoder(model_opt, tgt_embeddings)
 
     # Make NMTModel(= encoder + decoder).
     #model = NMTModel(encoder, decoder)
-    tgtvocabsize = len(fields["tgt"].vocab)
     model = VaeModel(encoder, decoder, model_opt)
     
-    # Make Generator.
-    if not model_opt.copy_attn:
-        '''
-        generator = nn.Sequential(
-            nn.Linear(model_opt.rnn_size, len(fields["tgt"].vocab)),
-            nn.LogSoftmax())
-        '''
-        generator = Generator(model_opt.rnn_size, len(fields["tgt"].vocab)) 
-        if model_opt.share_decoder_embeddings:
-            generator.linear.weight = decoder.embeddings.word_lut.weight
-    else:
-        generator = CopyGenerator(model_opt, fields["src"].vocab,
-                                  fields["tgt"].vocab)
-
+    generator = Generator(model_opt.rnn_size, len(tgt_dict)) 
 
     # Load the model states from checkpoint or initialize them.
     if checkpoint is not None:
@@ -489,4 +393,3 @@ def make_base_model(model_opt, fields, gpu, checkpoint=None):
         model.cpu()
 
     return model
-

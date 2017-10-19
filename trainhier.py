@@ -120,19 +120,6 @@ def tally_parameters(model):
 
 
 
-
-
-def build_model(model_opt, opt, fields, checkpoint):
-    print('Building model...')
-    model = hiervae.make_base_model(model_opt, fields,
-                                                  use_gpu(opt), checkpoint)
-    if len(opt.gpuid) > 1:
-        print('Multi gpu training ', opt.gpuid)
-        model = nn.DataParallel(model, device_ids=opt.gpuid, dim=1)
-    print(model)
-    return model
-
-
 def build_optim(model, checkpoint):
     if opt.train_from:
         print('Loading optimizer from checkpoint.')
@@ -152,24 +139,24 @@ def build_optim(model, checkpoint):
 
 
 def main():
-    train = pd.read_json('imdb_final.json')
-    test = pd.read_json('imdb_final.json')
+    train = pd.read_json('/awsnas/data/convdata/src-train_v.txt')
+    val = pd.read_json('/awsnas/data/convdata/src-val_v.txt')
     train_srs = train.context
     train_tgt = train.replies
     val_srs = train.context
     val_tgt = train.replies
 
-    emb_layer_srs = embeddings.EmbeddingLayer(
-        args.d, train_srs+val_srs,
-        embs = dataloader.load_embedding(args.embedding)
-    )
+    src_vocab = buildvocab(train_srs+val_srs)
+    tgt_vocab = buildvocab(train_tgt+val_tgt)
 
 
-    train_iter = gen_minibatch(train_srs, train_tgt, emb_layer_srs.word2id, mini_batch_size)
-    valid_iter = gen_minibatch(val_srs, val_tgt, emb_layer_srs.word2id, test_batch_size)
+    train_iter = gen_minibatch(train_srs, train_tgt, src_vocab, tgt_vocab, mini_batch_size)
+    valid_iter = gen_minibatch(val_srs, val_tgt, src_vocab, tgt_vocab, test_batch_size)
 
-    model = build_model(model_opt, opt, fields, checkpoint) ### Done
-    tally_parameters(model)### Done
+    print('Building model...')
+    model = hiervae.make_base_model(model_opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
+    print(model)
+    tally_parameters(model)### Done 
     check_save_model_path() ### Done
 
     # Build optimizer.

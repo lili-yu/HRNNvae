@@ -106,7 +106,7 @@ class VaeTrainer(object):
         report_stats = Statistics()
 
 
-        for i, batch in enumerate(self.train_iter):
+        for i, batch in enumerate(self.train_iter):  ### enumberate....
 
                 #if i > 100:
                 #    break

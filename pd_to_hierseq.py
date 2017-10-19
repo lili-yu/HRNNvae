@@ -235,7 +235,6 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
                 '''
                 pairn +=1
 
-
                 Autt_stats.append(len(a_utt.split(' ')))
                 context_arr = [w for sent in context for w in sent.split(' ') ]
                 context_stats.append(len(context_arr))

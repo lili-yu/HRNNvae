@@ -14,8 +14,9 @@ def deep_iter(x):
 
 
 class EmbeddingLayer(nn.Module):
-    def __init__(self, n_d, words, embs=None, fix_emb=True, oov='<oov>', pad='<pad>', normalize=True):
+    def __init__(self, n_d, words, vocab=None, embs=None, fix_emb=True, oov='<oov>', pad='<pad>', normalize=True):
         super(EmbeddingLayer, self).__init__()
+        
         word2id = {}
         if embs is not None:
             embwords, embvecs = embs
@@ -30,9 +31,13 @@ class EmbeddingLayer(nn.Module):
                 ))
                 n_d = len(embvecs[0])
 
-        for w in deep_iter(words):
-            if w not in word2id:
-                word2id[w] = len(word2id)
+        elif vocab is not None:
+            word2id = vocab
+
+        else:
+            for w in deep_iter(words):
+                if w not in word2id:
+                    word2id[w] = len(word2id)
 
         if oov not in word2id:
             word2id[oov] = len(word2id)

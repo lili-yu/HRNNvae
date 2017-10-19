@@ -417,7 +417,7 @@ class VaeModel(nn.Module):
 
 ################################################# make_function  #################################################
 
-def make_base_model(model_opt, fields, gpu, checkpoint=None):
+def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     """
     Args:
         model_opt: the option loaded from checkpoint.
@@ -429,40 +429,23 @@ def make_base_model(model_opt, fields, gpu, checkpoint=None):
         the NMTModel.
     """
     # Make encoder.
-    src_dict = fields["src"].vocab
-    feature_dicts = ONMTDataset.collect_feature_dicts(fields)
-    src_embeddings = make_embeddings(model_opt, src_dict,
-                                     feature_dicts)
+    src_embeddings = modules.EmbeddingLayer(
+        embedding_dim, src_dict,
+        embs = dataloader.load_embedding(args.embedding))
     encoder = make_encoder(model_opt, src_embeddings)
 
 
     # Make decoder.
-    tgt_dict = fields["tgt"].vocab
-    # TODO: prepare for a future where tgt features are possible.
-    feature_dicts = []
-    tgt_embeddings = make_embeddings(model_opt, tgt_dict,
-                                     feature_dicts, for_encoder=False)
+    src_embeddings = modules.EmbeddingLayer(
+        embedding_dim, tgt_dict,
+        embs = dataloader.load_embedding(args.embedding))
     decoder = make_decoder(model_opt, tgt_embeddings)
 
     # Make NMTModel(= encoder + decoder).
     #model = NMTModel(encoder, decoder)
-    tgtvocabsize = len(fields["tgt"].vocab)
     model = VaeModel(encoder, decoder, model_opt)
     
-    # Make Generator.
-    if not model_opt.copy_attn:
-        '''
-        generator = nn.Sequential(
-            nn.Linear(model_opt.rnn_size, len(fields["tgt"].vocab)),
-            nn.LogSoftmax())
-        '''
-        generator = Generator(model_opt.rnn_size, len(fields["tgt"].vocab)) 
-        if model_opt.share_decoder_embeddings:
-            generator.linear.weight = decoder.embeddings.word_lut.weight
-    else:
-        generator = CopyGenerator(model_opt, fields["src"].vocab,
-                                  fields["tgt"].vocab)
-
+    generator = Generator(model_opt.rnn_size, len(tgt_dict)) 
 
     # Load the model states from checkpoint or initialize them.
     if checkpoint is not None:

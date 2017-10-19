@@ -16,6 +16,93 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 
 
+def deep_iter(x):
+    if isinstance(x, list) or isinstance(x, tuple):
+        for u in x:
+            for v in deep_iter(u):
+                yield v
+    else:
+        yield x
+
+def buildvocab(words, oov='<oov>', pad='<pad>'):
+    word2id = {}
+    word2id[pad] = len(word2id)
+    word2id[oov] = len(word2id)
+
+    for w in deep_iter(words):
+        if w not in word2id:
+            word2id[w] = len(word2id)
+
+    print("The vocab size is: {}".format(len(word2id)))
+    return word2id
+
+
+
+
+def pad_batch(context, src_vocab, reverse_pad = False):
+
+    mini_batch_size = len(mini_batch)
+    max_sent_len = int(np.mean([len(x) for x in mini_batch]))
+    max_token_len = int(np.mean([len(val) for sublist in mini_batch for val in sublist]))
+    main_matrix = np.zeros((mini_batch_size, max_sent_len, max_token_len), dtype= np.int)
+
+    if not reverse_pad:
+        for i in range(main_matrix.shape[0]):
+            for j in range(main_matrix.shape[1]):
+                for k in range(main_matrix.shape[2]):
+                    try:
+                        main_matrix[i,j,k] = src_vocab[mini_batch[i][j][k]]
+                    except IndexError:
+                        pass
+    if reverse_pad:
+        for i in range(main_matrix.shape[0]):
+            for j in range(main_matrix.shape[1]):
+                for k in range(main_matrix.shape[2]):
+                    try:
+                        main_matrix[-i-1,-j-1,-k-1] =src_vocab[mini_batch[-i-1][-j-1][-k-1]] 
+                    except IndexError:
+                        pass
+    return Variable(torch.from_numpy(main_matrix).transpose(0,1))
+
+
+
+def pad_batch_reply(reply_batch, tgt_vocab):
+    
+    mini_batch_size = len(mini_batch)
+    max_sent_len = int(np.mean([len(x) for x in mini_batch]))
+    main_matrix = np.zeros((mini_batch_size, max_sent_len, max_token_len), dtype= np.int)
+
+    for i in range(main_matrix.shape[0]):
+        for j in range(main_matrix.shape[1]):
+                try:
+                    main_matrix[i,j] = tgt_vocab[mini_batch[i][j]]
+                except IndexError:
+                    pass
+    return Variable(torch.from_numpy(main_matrix).transpose(0,1))
+
+
+def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
+    assert inputs.shape[0] == targets.shape[0]
+    if shuffle:
+        indices = np.arange(inputs.shape[0])
+        np.random.shuffle(indices)
+    for start_idx in range(0, inputs.shape[0] - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield inputs[excerpt], targets[excerpt]
+
+
+
+def gen_minibatch(srs, tgt, mini_batch_size, src_vocab, tgt_vocab, shuffle= True):
+    for context, reply in iterate_minibatches(srs, tgt, mini_batch_size, shuffle= shuffle):
+        contexts = pad_batch(context, src_vocab, reverse_pad = True)
+        reply  = pad_batch_reply(reply , tgt_vocab)
+        yield contexts.cuda(), reply.cuda()
+
+
+
 # In[9]:
 
 def train_data(mini_batch, targets, word_attn_model, sent_attn_model, word_optimizer, sent_optimizer, criterion):
@@ -84,19 +171,6 @@ y_train.shape
 '''
 
 
-def pad_batch(mini_batch):
-    mini_batch_size = len(mini_batch)
-    max_sent_len = int(np.mean([len(x) for x in mini_batch]))
-    max_token_len = int(np.mean([len(val) for sublist in mini_batch for val in sublist]))
-    main_matrix = np.zeros((mini_batch_size, max_sent_len, max_token_len), dtype= np.int)
-    for i in xrange(main_matrix.shape[0]):
-        for j in xrange(main_matrix.shape[1]):
-            for k in xrange(main_matrix.shape[2]):
-                try:
-                    main_matrix[i,j,k] = mini_batch[i][j][k]
-                except IndexError:
-                    pass
-    return Variable(torch.from_numpy(main_matrix).transpose(0,1))
 
 
 # In[22]:
@@ -148,26 +222,6 @@ def test_data(mini_batch, targets, word_attn_model, sent_attn_model):
 
 
 # In[25]:
-
-def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
-    assert inputs.shape[0] == targets.shape[0]
-    if shuffle:
-        indices = np.arange(inputs.shape[0])
-        np.random.shuffle(indices)
-    for start_idx in range(0, inputs.shape[0] - batchsize + 1, batchsize):
-        if shuffle:
-            excerpt = indices[start_idx:start_idx + batchsize]
-        else:
-            excerpt = slice(start_idx, start_idx + batchsize)
-        yield inputs[excerpt], targets[excerpt]
-
-
-# In[26]:
-
-def gen_minibatch(tokens, labels, mini_batch_size, shuffle= True):
-    for token, label in iterate_minibatches(tokens, labels, mini_batch_size, shuffle= shuffle):
-        token = pad_batch(token)
-        yield token.cuda(), Variable(torch.from_numpy(label), requires_grad= False).cuda()    
 
 
 # In[27]:
