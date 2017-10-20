@@ -44,33 +44,33 @@ class VaeTrainer(object):
 
         for i, batch in enumerate(self.train_iter):  ### enumberate....
 
-                src = batch[0]
-                tgt = batch[1]
+            src = batch[0]
+            tgt = batch[1]
 
-                report_stats.n_src_words += len(src) #src_lengths.sum() #### To dooooo 
-
-
-                self.model.zero_grad()
-
-                outputs,  dec_state, mu, logvar= \
-                    self.model(src, tgt, dec_state)
-
-                batch_stats = Statistics()
-                
-                loss, stats = self.train_loss.compute_loss(outputs, tgt, mu, logvar)
-                #def compute_loss(self, batch, output, target, m, l, **kwargs):
-                loss.div(len(batch)).backward()
-                batch_stats.update(stats)
+            report_stats.n_src_words += len(src) #src_lengths.sum() #### To dooooo 
 
 
-                # 4. Update the parameters and statistics.
-                self.optim.step()
-                total_stats.update(batch_stats)
-                report_stats.update(batch_stats)
+            self.model.zero_grad()
 
-                # If truncated, don't backprop fully.
-                if dec_state is not None:
-                    dec_state.detach()
+            outputs,  dec_state, mu, logvar= \
+                self.model(src, tgt, dec_state)
+
+            batch_stats = Statistics()
+            
+            loss, stats = self.train_loss.compute_loss(outputs, tgt, mu, logvar)
+            #def compute_loss(self, batch, output, target, m, l, **kwargs):
+            loss.div(len(batch)).backward()
+            batch_stats.update(stats)
+
+
+            # 4. Update the parameters and statistics.
+            self.optim.step()
+            total_stats.update(batch_stats)
+            report_stats.update(batch_stats)
+
+            # If truncated, don't backprop fully.
+            if dec_state is not None:
+                dec_state.detach()
 
             if report_func is not None:
                 report_func(epoch, i, len(self.train_iter),
