@@ -9,7 +9,6 @@ from torch import cuda
 import hiervae
 import opts
 from hierdata import *
-from embeddings
 import Loss
 import Trainer
 import Optim
