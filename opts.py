@@ -30,7 +30,7 @@ def model_opts(parser):
     parser.add_argument('-feat_vec_exponent', type=float, default=0.7,
                         help="""If -feat_merge_size is not set, feature
                         embedding sizes will be set to N^feat_vec_exponent
-                        where N is the number of values the feature takes.""")
+                        where N is the number of values the fe ature takes.""")
     parser.add_argument('-position_encoding', action='store_true',
                         help='Use a sin to mark relative words positions.')
     parser.add_argument('-share_decoder_embeddings', action='store_true',

@@ -10,7 +10,9 @@ import hiervae
 import opts
 from hierdata import *
 from embeddings
-
+import Loss
+import Trainer
+import Optim
 
 parser = argparse.ArgumentParser(description='train.py')
 
@@ -45,14 +47,32 @@ if opt.gpuid:
 
 
 
+def report_func(epoch, batch, num_batches,
+                start_time, lr, report_stats):
+    """
+    This is the user-defined batch-level traing progress
+    report function.
+    Args:
+        epoch(int): current epoch count.
+        batch(int): current batch count.
+        num_batches(int): total number of batches.
+        start_time(float): last report time.
+        lr(float): current learning rate.
+        report_stats(Statistics): a Statistics instance.
+    """
+    if batch % opt.report_every == -1 % opt.report_every:
+        report_stats.output(epoch, batch+1, num_batches, start_time)
+        if opt.exp_host:
+            report_stats.log("progress", experiment, lr)
+
 def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
 
     #train_iter = make_train_data_iter(train_data, opt)
     #valid_iter = make_valid_data_iter(valid_data, opt)
 
 
-    train_loss = onmt.Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
-    valid_loss = onmt.Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
+    train_loss = Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
+    valid_loss = Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
 
     if use_gpu(opt):
         train_loss=train_loss.cuda()
@@ -61,7 +81,7 @@ def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
     trunc_size = opt.truncated_decoder  # Badly named... default=0
     shard_size = opt.max_generator_batches #default=32
 
-    trainer = onmt.VaeTrainer(model, train_iter, valid_iter,
+    trainer = Trainer.VaeTrainer(model, train_iter, valid_iter,
                            train_loss, valid_loss, optim,
                            trunc_size, shard_size)
 
@@ -128,7 +148,7 @@ def build_optim(model, checkpoint):
             checkpoint['optim'].optimizer.state_dict())
     else:
         # what members of opt does Optim need?
-        optim = onmt.Optim(
+        optim = Optim.Optim(
             opt.optim, opt.learning_rate, opt.max_grad_norm,
             lr_decay=opt.learning_rate_decay,
             start_decay_at=opt.start_decay_at,

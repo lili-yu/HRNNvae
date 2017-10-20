@@ -4,11 +4,25 @@ import torch.nn as nn
 from torch.autograd import Variable
 #from torch.nn.utils.rnn import pack_padded_sequence as pack
 #from torch.nn.utils.rnn import pad_packed_sequence as unpack
-import onmt
-from onmt.Utils import aeq
+
+
 import sys
 import numpy as np
+import SRU
 
+def aeq(*args):
+    """
+    Assert all arguments have the same value
+    """
+    arguments = (arg for arg in args)
+    first = next(arguments)
+    assert all(arg == first for arg in arguments), \
+        "Not all arguments have the same value: " + str(args)
+
+
+def use_gpu(opt):
+    return (hasattr(opt, 'gpuid') and len(opt.gpuid) > 0) or \
+        (hasattr(opt, 'gpu') and opt.gpu > -1)
 
 ################################################# Encoder  #################################################
 class wordEncoder(nn.Module):
@@ -24,7 +38,7 @@ class wordEncoder(nn.Module):
 
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
-            self.wordrnn = onmt.SRU(
+            self.wordrnn = SRU.SRU(
                     input_size=embeddings.embedding_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
@@ -39,7 +53,7 @@ class wordEncoder(nn.Module):
                     bidirectional=bidirectional)
 
 
-    def forward(self, input, lengths=None, hidden=None):
+    def forward(self, input, hidden=None):
         """
         Args:
             input (LongTensor): len x batch x nfeat.
@@ -73,7 +87,7 @@ class ConvEncoder(nn.Module):
         self.wordrnn = wordEncoder(rnn_type, bidirectional, num_layers, hidden_size, dropout, embeddings)
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
-            self.convrnn = onmt.SRU(
+            self.convrnn = SRU.SRU(
                     input_size=embeddings.embedding_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
@@ -91,7 +105,7 @@ class ConvEncoder(nn.Module):
         self.varcoeff = 0.0
         self.varstep = 0.1
 
-    def forward(self, input, lengths=None, state_word=None, hidden_sent=None):
+    def forward(self, input, state_word=None, hidden_sent=None):
         """
         Args:
             input (LongTensor): len x batch x nfeat.
@@ -250,7 +264,7 @@ class RNNDecoder(nn.Module):
         """
         # Use pytorch version when available.
         if rnn_type == "SRU":
-            return onmt.SRU(
+            return SRU.SRU(
                     input_size, hidden_size,
                     num_layers=num_layers,
                     dropout=dropout)
@@ -307,7 +321,7 @@ class VaeModel(nn.Module):
         self.decoder = decoder
         self.n_layers = decoder.num_layers
 
-    def forward(self, src, tgt, lengths, dec_state=None):
+    def forward(self, src, tgt, dec_state=None):
         """
         Args:
             src(FloatTensor): a sequence of source tensors with
@@ -324,12 +338,13 @@ class VaeModel(nn.Module):
         """
         src = src
         tgt = tgt[:-1]  # exclude last target from inputs
-        context, z,  mu, logvar = self.encoder(src, lengths)
+        context, z,  mu, logvar = self.encoder(src)
         #enc_z = self.z2h(z)
         enc_z = self.z2h(z).unsqueeze(0).repeat(self.n_layers, 1, 1)
         cell_z = self.z2c(z).unsqueeze(0).repeat(self.n_layers, 1, 1)
         enc_state = self.decoder.init_decoder_state(context, (enc_z,cell_z))
         out, dec_state = self.decoder(tgt, context, enc_state)
+        
         return out, dec_state, mu, logvar
 
 
