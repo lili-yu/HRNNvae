@@ -102,7 +102,7 @@ def gen_minibatch(srs, tgt, mini_batch_size, src_vocab, tgt_vocab, shuffle= True
         yield contexts.cuda(), reply.cuda()
 
 
-
+'''
 # In[9]:
 
 def train_data(mini_batch, targets, word_attn_model, sent_attn_model, word_optimizer, sent_optimizer, criterion):
@@ -153,7 +153,7 @@ def get_predictions(val_tokens, word_attn_model, sent_attn_model):
 # ## Loading the data
 
 # In[14]:
-'''
+
 d = pd.read_json('/data1/sandeep/datasets/imdb_final.json')
 
 d['rating'] = d['rating'] - 1
@@ -168,7 +168,7 @@ y = d.rating
 X_train, X_test, y_train, y_test = train_test_split(X.values, y.values, test_size = 0.3, random_state= 42)
 
 y_train.shape
-'''
+
 
 
 
@@ -319,6 +319,7 @@ def train_main():
     # In[35]:
 
     test_accuracy_full_batch(X_train, y_train, 64, word_attn, sent_attn)
+'''
 
 
 
