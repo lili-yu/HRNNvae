@@ -99,9 +99,9 @@ def model_opts(parser):
 
 def train_opts(parser):
     # Model loading/saving options
-    parser.add_argument('-data', required=True,
+    parser.add_argument('-data', 
                         help="""Path prefix to the ".train.pt" and
-                        ".valid.pt" file path from preprocess.py""")
+                        ".valid.pt" file path from preprocess.py""") #required=True,
 
     parser.add_argument('-save_model', default='model',
                         help="""Model filename (the model will be saved as
