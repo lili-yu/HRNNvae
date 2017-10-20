@@ -1,5 +1,5 @@
 import argparse
-from onmt.SRU import CheckSRU
+from SRU import CheckSRU
 
 
 def model_opts(parser):
