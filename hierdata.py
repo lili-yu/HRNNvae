@@ -60,7 +60,7 @@ def pad_batch(context, src_vocab, reverse_pad = False):
             for j in range(main_matrix.shape[1]):
                 for k in range(main_matrix.shape[2]):
                     try:
-                        main_matrix[i,j,k] = src_vocab.get(mini_batch[i][j][k],'<oov>')
+                        main_matrix[i,j,k] = src_vocab.get(mini_batch[i][j][k],src_vocab['<oov>'])
                     except IndexError:
                         pass
     if reverse_pad:
@@ -68,7 +68,7 @@ def pad_batch(context, src_vocab, reverse_pad = False):
             for j in range(main_matrix.shape[1]):
                 for k in range(main_matrix.shape[2]):
                     try:
-                        main_matrix[-i-1,-j-1,-k-1] = src_vocab.get(mini_batch[-i-1][-j-1][-k-1],'<oov>')
+                        main_matrix[-i-1,-j-1,-k-1] = src_vocab.get(mini_batch[-i-1][-j-1][-k-1],src_vocab['<oov>'])
                     except IndexError:
                         pass
     return Variable(torch.from_numpy(main_matrix).transpose(0,1))
@@ -84,7 +84,7 @@ def pad_batch_reply(reply_batch, tgt_vocab):
     for i in range(main_matrix.shape[0]):
         for j in range(main_matrix.shape[1]):
                 try:
-                    main_matrix[i,j] = tgt_vocab.get(mini_batch[i][j], '<oov>')
+                    main_matrix[i,j] = tgt_vocab.get(mini_batch[i][j], src_vocab['<oov>'])
                 except IndexError:
                     pass
     return Variable(torch.from_numpy(main_matrix).transpose(0,1))
