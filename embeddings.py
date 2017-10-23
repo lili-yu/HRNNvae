@@ -14,7 +14,7 @@ def deep_iter(x):
 
 
 class EmbeddingLayer(nn.Module):
-    def __init__(self, n_d,  vocab=None, words=None, embs=None, fix_emb=True, oov='<oov>', pad='<pad>', normalize=Falses):
+    def __init__(self, n_d,  vocab=None, words=None, embs=None, fix_emb=True, oov='<oov>', pad='<pad>', normalize=False):
         super(EmbeddingLayer, self).__init__()
         
         word2id = {}
