@@ -50,7 +50,7 @@ def buildvocab(words, oov='<oov>', pad='<pad>', min_freq=0, MAX_vocab_size = 500
 
 def pad_batch(context, src_vocab, reverse_pad = False):
 
-    mini_batch_size = len(mini_batch)
+    mini_batch_size = len(context)
     max_sent_len = int(np.mean([len(x) for x in mini_batch]))
     max_token_len = int(np.mean([len(val) for sublist in mini_batch for val in sublist]))
     main_matrix = np.zeros((mini_batch_size, max_sent_len, max_token_len), dtype= np.int)
