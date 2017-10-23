@@ -29,7 +29,7 @@ def use_gpu(opt):
 class wordEncoder(nn.Module):
 
     def __init__(self, rnn_type, bidirectional, num_layers,
-                 hidden_size, dropout, embeddings, z_size):
+                 hidden_size, dropout, embeddings):
         super(wordEncoder, self).__init__()
 
         num_directions = 2 if bidirectional else 1
@@ -366,13 +366,22 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
         the NMTModel.
     """
     # Make encoder.
+    opt=model_opt
     src_embeddings = embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
-    encoder = make_encoder(model_opt, src_embeddings)
+    encoder = ConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
+                          opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)
 
 
     # Make decoder.
-    src_embeddings =  embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
-    decoder = make_decoder(model_opt, tgt_embeddings)
+    tgt_embeddings =  embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
+    decoder = RNNDecoder(opt.rnn_type, opt.brnn,
+                             opt.dec_layers, opt.rnn_size,
+                             opt.global_attention,
+                             opt.coverage_attn,
+                             opt.context_gate,
+                             opt.copy_attn,
+                             opt.dropout,
+                             tgt_embeddings)
 
     # Make NMTModel(= encoder + decoder).
     #model = NMTModel(encoder, decoder)
@@ -390,10 +399,12 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
             print('Intializing parameters.')
             for p in model.parameters():
                 p.data.uniform_(-model_opt.param_init, model_opt.param_init)
-        model.encoder.embeddings.load_pretrained_vectors(
+        '''
+        model.encoder.wordrnn.embeddings.load_pretrained_vectors(
                 model_opt.pre_word_vecs_enc, model_opt.fix_word_vecs_enc)
         model.decoder.embeddings.load_pretrained_vectors(
                 model_opt.pre_word_vecs_dec, model_opt.fix_word_vecs_dec)
+        '''
 
     # add the generator to the module (does this register the parameter?)
     model.generator = generator

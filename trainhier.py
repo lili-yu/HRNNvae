@@ -90,8 +90,9 @@ def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
     #valid_iter = make_valid_data_iter(valid_data, opt)
 
 
-    train_loss = Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
-    valid_loss = Loss.VaeLossCompute(model.generator, model.encoder, tgtvocab)
+    train_loss = Loss.VAELoss(model.generator,  tgtvocab)
+    valid_loss = Loss.VAELoss(model.generator,  tgtvocab)
+
 
     if use_gpu(opt):
         train_loss=train_loss.cuda()
@@ -101,8 +102,7 @@ def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
     shard_size = opt.max_generator_batches #default=32
 
     trainer = Trainer.VaeTrainer(model, train_iter, valid_iter,
-                           train_loss, valid_loss, optim,
-                           trunc_size, shard_size)
+                           train_loss, valid_loss, optim)
 
     for epoch in range(opt.start_epoch, opt.epochs + 1):
         print('')
@@ -214,7 +214,7 @@ def main():
     optim = build_optim(model, checkpoint)
 
     # Do training.
-    train_vae(model, train_iter, valid_iter, tgtvocab, optim)
+    train_vae(model, train_iter, valid_iter, tgt_vocab, optim)
 
 
 if __name__ == "__main__":

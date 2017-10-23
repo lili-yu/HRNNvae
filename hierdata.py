@@ -23,7 +23,7 @@ def deep_iter(x):
     else:
         yield x
 
-def buildvocab(words, oov='<oov>', pad='<pad>', MAX_vocab_size = 50000):
+def buildvocab(words, oov='<oov>', pad='<pad>', min_freq=0, MAX_vocab_size = 50000):
 
     counter = Counter()
 
@@ -32,12 +32,15 @@ def buildvocab(words, oov='<oov>', pad='<pad>', MAX_vocab_size = 50000):
     word2id[oov] = len(word2id)
 
     for w in deep_iter(words):
-        #counter.update(x)
-        #print(w)
-        if w not in word2id:
-            word2id[w] = len(word2id)
-        if len(word2id)> MAX_vocab_size:
+        counter.update(w)
+
+    words_and_frequencies = sorted(counter.items(), key=lambda tup: tup[1], reverse=True)
+    
+
+    for word, freq in words_and_frequencies:
+        if freq < min_freq or len(word2id) == MAX_vocab_size:
             break
+        word2id[word] = len(word2id)
 
     print("The vocab size is: {}".format(len(word2id)))
     return word2id
@@ -89,6 +92,13 @@ def pad_batch_reply(reply_batch, tgt_vocab):
 
 
 def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
+    inputs = np.array(inputs)
+    targets = np.array(targets)
+    print(inputs.shape)
+    print(targets.shape)
+    print(batchsize)
+
+    
     assert inputs.shape[0] == targets.shape[0]
     if shuffle:
         indices = np.arange(inputs.shape[0])

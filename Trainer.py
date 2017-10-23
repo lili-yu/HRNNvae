@@ -29,8 +29,6 @@ class VaeTrainer(object):
         self.train_loss = train_loss
         self.valid_loss = valid_loss
         self.optim = optim
-        self.trunc_size = trunc_size
-        self.shard_size = shard_size
 
         # Set model in training mode.
         self.model.train()
