@@ -49,7 +49,7 @@ def buildvocab(words, oov='<oov>', pad='<pad>', min_freq=0, MAX_vocab_size = 500
 
 
 def pad_batch(context, src_vocab, reverse_pad = False):
-
+    mini_batch = context
     mini_batch_size = len(context)
     max_sent_len = int(np.mean([len(x) for x in mini_batch]))
     max_token_len = int(np.mean([len(val) for sublist in mini_batch for val in sublist]))
@@ -58,10 +58,9 @@ def pad_batch(context, src_vocab, reverse_pad = False):
     if not reverse_pad:
         for i in range(main_matrix.shape[0]):
             for j in range(main_matrix.shape[1]):
-                
                 for k in range(main_matrix.shape[2]):
                     try:
-                        main_matrix[i,j,k] = src_vocab[sent[k]]
+                        main_matrix[i,j,k] = src_vocab[mini_batch[i][j][k]]
                     except IndexError:
                         pass
     if reverse_pad:
@@ -77,10 +76,10 @@ def pad_batch(context, src_vocab, reverse_pad = False):
 
 
 def pad_batch_reply(reply_batch, tgt_vocab):
-    
+    mini_batch = reply_batch
     mini_batch_size = len(mini_batch)
     max_sent_len = int(np.mean([len(x) for x in mini_batch]))
-    main_matrix = np.zeros((mini_batch_size, max_sent_len, max_token_len), dtype= np.int)
+    main_matrix = np.zeros((mini_batch_size, max_sent_len), dtype= np.int)
 
     for i in range(main_matrix.shape[0]):
         for j in range(main_matrix.shape[1]):
