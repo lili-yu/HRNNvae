@@ -200,8 +200,8 @@ def main():
 
     mini_batch_size = 32
     test_batch_size = 16
-    train_iter = hierdata.gen_minibatch(train_srs, train_tgt, src_vocab, tgt_vocab, mini_batch_size)
-    valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, src_vocab, tgt_vocab, test_batch_size)
+    train_iter = hierdata.gen_minibatch(train_srs, train_tgt, , mini_batch_size, src_vocab, tgt_vocab)
+    valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)
 
 
     print('Building model...')
