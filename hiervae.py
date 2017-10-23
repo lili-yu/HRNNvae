@@ -9,6 +9,7 @@ from torch.autograd import Variable
 import sys
 import numpy as np
 import SRU
+import embeddings
 
 def aeq(*args):
     """
@@ -365,16 +366,12 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
         the NMTModel.
     """
     # Make encoder.
-    src_embeddings = modules.EmbeddingLayer(
-        embedding_dim, src_dict,
-        embs = dataloader.load_embedding(args.embedding))
+    src_embeddings = embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
     encoder = make_encoder(model_opt, src_embeddings)
 
 
     # Make decoder.
-    src_embeddings = modules.EmbeddingLayer(
-        embedding_dim, tgt_dict,
-        embs = dataloader.load_embedding(args.embedding))
+    src_embeddings =  embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
     decoder = make_decoder(model_opt, tgt_embeddings)
 
     # Make NMTModel(= encoder + decoder).

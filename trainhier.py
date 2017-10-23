@@ -5,6 +5,7 @@ import argparse
 import torch
 import torch.nn as nn
 from torch import cuda
+import pandas as pd
 
 import hiervae
 import opts
@@ -12,8 +13,25 @@ import hierdata
 import Loss
 import Trainer
 import Optim
-import pandas as pd
 import sys
+
+print('starting')
+
+
+def aeq(*args):
+    """
+    Assert all arguments have the same value
+    """
+    arguments = (arg for arg in args)
+    first = next(arguments)
+    assert all(arg == first for arg in arguments), \
+        "Not all arguments have the same value: " + str(args)
+
+
+def use_gpu(opt):
+    return (hasattr(opt, 'gpuid') and len(opt.gpuid) > 0) or \
+        (hasattr(opt, 'gpu') and opt.gpu > -1)
+
 
 parser = argparse.ArgumentParser(description='train.py')
 
@@ -160,32 +178,34 @@ def build_optim(model, checkpoint):
 
 
 def main():
-    train = pd.read_json('/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json')
-    val = pd.read_json('/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json')
-    train_srs = train.context.values.tolist()
-    train_tgt = train.replies.values.tolist()
-    val_srs = val.context.values.tolist()
-    val_tgt = val.replies.values.tolist()
+    global opt
+    checkpoint = None
+    dict_checkpoint = opt.train_from
 
-    '''
-    test =  hierdata.buildvocab(train_tgt)
-    print('vocab built')
-    test2 =  hierdata.buildvocab(train_srs)
-    sys.exit()
-    '''
+    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
+    print('Reading training data: {}'.format(trainfile))
+    train = pd.read_json(trainfile)
+    valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json'
+    print('Reading validation data: {}'.format(valfile))
+    val = pd.read_json(valfile)
+
+    train_srs = train.context.values.tolist()[:500]
+    train_tgt = train.replies.values.tolist()[:500]
+    val_srs = val.context.values.tolist()[:500]
+    val_tgt = val.replies.values.tolist()[:500]
 
 
     src_vocab = hierdata.buildvocab(train_srs+val_srs)
-    print('vocab built')
     tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
-    sys.exit()
 
-
+    mini_batch_size = 32
+    test_batch_size = 16
     train_iter = hierdata.gen_minibatch(train_srs, train_tgt, src_vocab, tgt_vocab, mini_batch_size)
     valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, src_vocab, tgt_vocab, test_batch_size)
 
+
     print('Building model...')
-    model = hiervae.make_base_model(model_opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
+    model = hiervae.make_base_model(opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
     print(model)
     tally_parameters(model)### Done 
     check_save_model_path() ### Done
