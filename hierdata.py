@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
+from collections import Counter, OrderedDict
 
 
 def deep_iter(x):
@@ -22,14 +23,21 @@ def deep_iter(x):
     else:
         yield x
 
-def buildvocab(words, oov='<oov>', pad='<pad>'):
+def buildvocab(words, oov='<oov>', pad='<pad>', MAX_vocab_size = 50000):
+
+    counter = Counter()
+
     word2id = {}
     word2id[pad] = len(word2id)
     word2id[oov] = len(word2id)
 
     for w in deep_iter(words):
+        #counter.update(x)
+        #print(w)
         if w not in word2id:
             word2id[w] = len(word2id)
+        if len(word2id)> MAX_vocab_size:
+            break
 
     print("The vocab size is: {}".format(len(word2id)))
     return word2id
@@ -47,9 +55,10 @@ def pad_batch(context, src_vocab, reverse_pad = False):
     if not reverse_pad:
         for i in range(main_matrix.shape[0]):
             for j in range(main_matrix.shape[1]):
+                
                 for k in range(main_matrix.shape[2]):
                     try:
-                        main_matrix[i,j,k] = src_vocab[mini_batch[i][j][k]]
+                        main_matrix[i,j,k] = src_vocab[sent[k]]
                     except IndexError:
                         pass
     if reverse_pad:

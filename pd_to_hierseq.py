@@ -178,8 +178,6 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
     old_id = -1 #data1.iloc[0]['conversationid']
     last_speaker = int(data1.iloc[0]['eventflagfromrep'])
 
-    #a_utt = ''
-    #c_utt = ''
     context = []
     conversation = []
     replies = []
@@ -197,9 +195,9 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
         new_id = data1.iloc[i]['conversationid']
         this_speaker = int(data1.iloc[i]['eventflagfromrep'])
         text = data1.iloc[i]['text']
-        utt = preclean_text(text.lower())
-        if len(utt.split(' '))> MAX_wps:
-            utt = ' '.join(utt.split(' ')[-MAX_wps:])
+        utt = preclean_text(text.lower()).split(' ')
+        if len(utt)> MAX_wps:
+            utt = utt[-MAX_wps:]
 
         if new_id != old_id:
             conv_n += 1
@@ -214,14 +212,14 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
 
         # customer is speaking 
         if this_speaker == False:
-            c_utt = customer_begin_symbol + utt + customer_end_symbol
+            c_utt = [customer_begin_symbol] + utt + [customer_end_symbol]
             #context = context + ' ' + c_utt
             context.append(c_utt)
             turns.append(utter_n)
             speaker.append(this_speaker)
 
         if this_speaker == True:
-            a_utt = agent_begin_symbol + utt + agent_end_symbol
+            a_utt = [agent_begin_symbol] + utt + [agent_end_symbol]
 
             if utter_n >= saving_starts_turnn:
                 '''
@@ -235,8 +233,8 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
                 '''
                 pairn +=1
 
-                Autt_stats.append(len(a_utt.split(' ')))
-                context_arr = [w for sent in context for w in sent.split(' ') ]
+                Autt_stats.append(len(a_utt))
+                context_arr = [w for sent in context for w in sent]
                 context_stats.append(len(context_arr))
                 if len(context) > MAX_turn:
                     context = context[-MAX_turn:]
@@ -254,7 +252,7 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
         old_id = new_id
         last_speaker = this_speaker
 
-    filename=args.outdir +'/'+ 'conv-'+indicator+'_v'+args.version+'.txt'
+    filename=args.outdir +'/'+ 'conv-'+indicator+'_v'+args.version+'.json'
     data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
     with open(filename, 'w') as outfile:
         json.dump(data, outfile)
@@ -274,28 +272,16 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
     print(bin_edges)
     print('Counts of replies: ')
     print(hist)
-    print('File saved to: {} and {}.'.format(args.outdir +'/'+ 'tgt-'+indicator+'_v'+args.version+'.txt',args.outdir +'/'+ 'src-'+indicator+'_v'+args.version+'.txt' ))
-    print('\n')
+    print('File saved to: {}'.format(filename))
+
     #return pairs
 
-
-# -----------------------------------------------------        
-def pairs_tofile(pairs, indicator):
-    f_tgt = open('/awsnas/data/convdata/tgt-'+indicator+'.txt', 'w')
-    f_src = open('/awsnas/data/convdata/src-'+indicator+'.txt', 'w')
-    for p in pairs:
-        f_tgt.write(p[0])
-        f_tgt.write('\n')
-        f_src.write(p[1])
-        f_src.write('\n')
-    f_tgt.close()
-    f_src.close()
 
 
 def main ():
     parser = argparse.ArgumentParser(description='process from raw data for seq2seq training')
-    parser.add_argument('-indir', default='/awsnas/data/dialogue_csv', type=str, help='location of the file, e.g awsnas')
-    parser.add_argument('-outdir', default='/awsnas/data/convdata', type=str, help='location of the file, e.g awsnas')
+    parser.add_argument('-indir', default='/D/home/lili/mnt/DATA/convaws/dialogue_csv', type=str, help='location of the file, e.g awsnas')
+    parser.add_argument('-outdir', default='/D/home/lili/mnt/DATA/convaws/convdata', type=str, help='location of the file, e.g awsnas')
     parser.add_argument('--files', default=[], nargs='+', type=str, help='name of files to process')
     parser.add_argument('--version', default='', type=str, help='version of the file')
     args = parser.parse_args()

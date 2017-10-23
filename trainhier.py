@@ -8,10 +8,12 @@ from torch import cuda
 
 import hiervae
 import opts
-from hierdata import *
+import hierdata
 import Loss
 import Trainer
 import Optim
+import pandas as pd
+import sys
 
 parser = argparse.ArgumentParser(description='train.py')
 
@@ -158,19 +160,29 @@ def build_optim(model, checkpoint):
 
 
 def main():
-    train = pd.read_json('/awsnas/data/convdata/src-train_v.txt')
-    val = pd.read_json('/awsnas/data/convdata/src-val_v.txt')
-    train_srs = train.context
-    train_tgt = train.replies
-    val_srs = train.context
-    val_tgt = train.replies
+    train = pd.read_json('/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json')
+    val = pd.read_json('/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json')
+    train_srs = train.context.values.tolist()
+    train_tgt = train.replies.values.tolist()
+    val_srs = val.context.values.tolist()
+    val_tgt = val.replies.values.tolist()
 
-    src_vocab = buildvocab(train_srs+val_srs)
-    tgt_vocab = buildvocab(train_tgt+val_tgt)
+    '''
+    test =  hierdata.buildvocab(train_tgt)
+    print('vocab built')
+    test2 =  hierdata.buildvocab(train_srs)
+    sys.exit()
+    '''
 
 
-    train_iter = gen_minibatch(train_srs, train_tgt, src_vocab, tgt_vocab, mini_batch_size)
-    valid_iter = gen_minibatch(val_srs, val_tgt, src_vocab, tgt_vocab, test_batch_size)
+    src_vocab = hierdata.buildvocab(train_srs+val_srs)
+    print('vocab built')
+    tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
+    sys.exit()
+
+
+    train_iter = hierdata.gen_minibatch(train_srs, train_tgt, src_vocab, tgt_vocab, mini_batch_size)
+    valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, src_vocab, tgt_vocab, test_batch_size)
 
     print('Building model...')
     model = hiervae.make_base_model(model_opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
