@@ -368,13 +368,13 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     """
     # Make encoder.
     opt=model_opt
-    src_embeddings = embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
+    src_embeddings = embeddings.EmbeddingLayer(100, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
     encoder = ConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
                           opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)
     
 
     # Make decoder.
-    tgt_embeddings =  embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
+    tgt_embeddings =  embeddings.EmbeddingLayer(100 vocab=tgt_dict)
     decoder = RNNDecoder(opt.rnn_type, opt.brnn,
                              opt.dec_layers, opt.rnn_size,
                              opt.global_attention,
