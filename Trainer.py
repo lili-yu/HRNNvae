@@ -45,8 +45,6 @@ class VaeTrainer(object):
             src = batch[0]
             tgt = batch[1]
             
-            #print(src.size())
-            #print(tgt.size())
 
             report_stats.n_src_words += len(src) #src_lengths.sum() #### To dooooo 
 
@@ -71,11 +69,11 @@ class VaeTrainer(object):
             report_stats.update(batch_stats)
 
             # If truncated, don't backprop fully.
-            if dec_state is not None:
-                dec_state.detach()
+            #if dec_state is not None:
+            #    dec_state.detach()
 
             if report_func is not None:
-                report_func(epoch, i, len(self.train_iter),
+                report_func(epoch, i, 500,
                             total_stats.start_time, self.optim.lr,
                             report_stats)
                 report_stats = Statistics()

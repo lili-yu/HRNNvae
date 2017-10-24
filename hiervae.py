@@ -33,9 +33,9 @@ class wordEncoder(nn.Module):
                  hidden_size, dropout, embeddings):
         super(wordEncoder, self).__init__()
 
-        num_directions = 2 if bidirectional else 1
-        assert hidden_size % num_directions == 0
-        self.hidden_size = hidden_size // num_directions
+        self.num_directions = 2 if bidirectional else 1
+        assert hidden_size % self.num_directions == 0
+        self.hidden_size = hidden_size // self.num_directions
         self.embeddings = embeddings
         self.num_layers = num_layers
 
@@ -70,14 +70,12 @@ class wordEncoder(nn.Module):
         """ See EncoderBase.forward() for description of args and returns."""
 
         emb = self.embeddings(input)
-        print(emb.size())
         s_len, batch, emb_dim = emb.size()
-
-        h0 = Variable(torch.randn(num_directions*self.num_layers, batch, self.hidden_size)).cuda()
-        c0 = Variable(torch.randn(num_directions*self.num_layers, batch, self.hidden_size)).cuda()
+        h0 = Variable(torch.zeros(self.num_directions*self.num_layers, batch, self.hidden_size)).cuda()
+        c0 = Variable(torch.zeros(self.num_directions*self.num_layers, batch, self.hidden_size)).cuda()
 
         outputs, hidden_t = self.wordrnn(emb, (h0,c0))
-        return hidden_t, outputs
+        return outputs, hidden_t
 
 
 
@@ -125,11 +123,9 @@ class ConvEncoder(nn.Module):
         """
         """ See EncoderBase.forward() for description of args and returns."""
         max_sents, batch_size, max_tokens = input.size()
-        print(input.size())
         s = None
         for i in range(max_sents):
             this_input = input[i,:,:].transpose(0,1)
-            print(this_input.size())
             _s, state_word = self.wordRNN(this_input, state_word)
             if(s is None):
                 s = _s
@@ -149,7 +145,7 @@ class ConvEncoder(nn.Module):
 
         #return hidden_t, outputs
         #return mu, logvar, z, hidden_t, outputs
-        return outputs, z,  mu, logvar
+        return outputs_sent, z,  mu, logvar
 
     def sample(self, mu, logvar):
         #print(mu.size())
@@ -212,8 +208,8 @@ class RNNDecoder(nn.Module):
                                 of shape (src_len x batch).
         """
         # Args Check
-        assert isinstance(state, RNNDecoderState)
-        input_len, input_batch, _ = input.size()
+        #assert isinstance(state, RNNDecoderState)
+        input_len, input_batch = input.size()
         contxt_len, contxt_batch, _ = context.size()
         aeq(input_batch, contxt_batch)
         # END Args Check
@@ -232,7 +228,7 @@ class RNNDecoder(nn.Module):
         #print(emb.size())
 
         #h0 = self._fix_enc_hidden(state.hidden[0])
-        h0 =  state.hidden[0][0]
+        h0 =  state[0][0]
         #print(h0.size())
         h0_all = h0.repeat(emb.size()[0], 1,1)
         emb = torch.cat([emb, h0_all],2)
@@ -243,7 +239,7 @@ class RNNDecoder(nn.Module):
         outputs = self.dropout(rnn_output)
 
         # Result 
-        input_len, input_batch, _ = input.size()
+        input_len, input_batch = input.size()
         output_len, output_batch, _ = rnn_output.size()
         aeq(input_len, output_len)
         aeq(input_batch, output_batch)
@@ -347,12 +343,13 @@ class VaeModel(nn.Module):
                                       Init hidden state
         """
         src = src
-        tgt = tgt[:-1]  # exclude last target from inputs
+        #tgt = tgt[:-1]  # exclude last target from inputs  ##########?????????/????????
         context, z,  mu, logvar = self.encoder(src)
         #enc_z = self.z2h(z)
         enc_z = self.z2h(z).unsqueeze(0).repeat(self.n_layers, 1, 1)
         cell_z = self.z2c(z).unsqueeze(0).repeat(self.n_layers, 1, 1)
-        enc_state = self.decoder.init_decoder_state(context, (enc_z,cell_z))
+        #enc_state = self.decoder.init_decoder_state(context, (enc_z,cell_z))
+        enc_state = (enc_z,cell_z)
         out, dec_state = self.decoder(tgt, context, enc_state)
         
         return out, dec_state, mu, logvar
@@ -378,8 +375,7 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     opt=model_opt
     src_embeddings = embeddings.EmbeddingLayer(100, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
     encoder = ConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
-                          opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)
-    
+                          opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)   
 
     # Make decoder.
     tgt_embeddings =  embeddings.EmbeddingLayer(100, vocab=tgt_dict)

@@ -127,8 +127,9 @@ def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
         trainer.epoch_step(valid_stats.ppl(), epoch)
 
         # 5. Drop a checkpoint if needed.
-        if epoch >= opt.start_checkpoint_at:
-            trainer.drop_checkpoint(opt, epoch, fields, valid_stats)
+        
+        #if epoch >= opt.start_checkpoint_at:
+        #    trainer.drop_checkpoint(opt, epoch, fields, valid_stats)
 
         train_loss.VAE_weightaneal(epoch)
         valid_loss.VAE_weightaneal(epoch)
@@ -183,17 +184,28 @@ def main():
     dict_checkpoint = opt.train_from
 
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
-    print('Reading training data: {}'.format(trainfile))
     train = pd.read_json(trainfile)
+    print('Read training data from: {}'.format(trainfile))
+
+
     valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json'
-    print('Reading validation data: {}'.format(valfile))
     val = pd.read_json(valfile)
+    print('Read validation data from: {}'.format(valfile))
 
-    train_srs = train.context.values.tolist()[:200]
-    train_tgt = train.replies.values.tolist()[:200]
-    val_srs = val.context.values.tolist()[:200]
-    val_tgt = val.replies.values.tolist()[:200]
+    train_srs = train.context.values.tolist()
+    train_tgt = train.replies.values.tolist()
+    val_srs = val.context.values.tolist()
+    val_tgt = val.replies.values.tolist()
 
+
+    '''
+    train_srs0 = train.context.values.tolist()
+    train_tgt0 = train.replies.values.tolist()
+    train_srs = train_srs0[:300]
+    train_tgt = train_tgt0[:300]
+    val_srs = train_srs0[500:800]
+    val_tgt = train_tgt0[500:800]
+    '''
 
     src_vocab = hierdata.buildvocab(train_srs+val_srs)
     tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)

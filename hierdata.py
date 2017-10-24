@@ -33,12 +33,13 @@ def buildvocab(words, oov='<oov>', pad='<pad>', min_freq=0, MAX_vocab_size = 500
 
     for w in deep_iter(words):
         counter.update(w)
+    print("Total words before filtering is: {}".format(len(counter.items())))
 
     words_and_frequencies = sorted(counter.items(), key=lambda tup: tup[1], reverse=True)
     
 
     for word, freq in words_and_frequencies:
-        if freq < min_freq or len(word2id) == MAX_vocab_size:
+        if  len(word2id) == MAX_vocab_size:
             break
         word2id[word] = len(word2id)
 
@@ -93,11 +94,7 @@ def pad_batch_reply(reply_batch, tgt_vocab):
 def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
     inputs = np.array(inputs)
     targets = np.array(targets)
-    print(inputs.shape)
-    print(targets.shape)
-    print(batchsize)
-
-    
+  
     assert inputs.shape[0] == targets.shape[0]
     if shuffle:
         indices = np.arange(inputs.shape[0])
@@ -112,10 +109,12 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
 
 
 def gen_minibatch(srs, tgt, mini_batch_size, src_vocab, tgt_vocab, shuffle= True):
+    batches = []
     for context, reply in iterate_minibatches(srs, tgt, mini_batch_size, shuffle= shuffle):
         contexts = pad_batch(context, src_vocab, reverse_pad = True)
         reply  = pad_batch_reply(reply , tgt_vocab)
-        yield contexts.cuda(), reply.cuda()
+        batches.append([contexts.cuda(), reply.cuda()]) 
+    return batches
 
 
 '''
