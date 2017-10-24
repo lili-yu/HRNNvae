@@ -374,7 +374,7 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     
 
     # Make decoder.
-    tgt_embeddings =  embeddings.EmbeddingLayer(100 vocab=tgt_dict)
+    tgt_embeddings =  embeddings.EmbeddingLayer(100, vocab=tgt_dict)
     decoder = RNNDecoder(opt.rnn_type, opt.brnn,
                              opt.dec_layers, opt.rnn_size,
                              opt.global_attention,
