@@ -35,22 +35,23 @@ class wordEncoder(nn.Module):
 
         num_directions = 2 if bidirectional else 1
         assert hidden_size % num_directions == 0
-        hidden_size = hidden_size // num_directions
+        self.hidden_size = hidden_size // num_directions
         self.embeddings = embeddings
+        self.num_layers = num_layers
 
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
             self.wordrnn = SRU.SRU(
                     input_size=embeddings.embedding_size,
-                    hidden_size=hidden_size,
-                    num_layers=num_layers,
+                    hidden_size=self.hidden_size,
+                    num_layers=self.num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
         else:
             self.wordrnn = getattr(nn, rnn_type)(
                     input_size=embeddings.embedding_size,
-                    hidden_size=hidden_size,
-                    num_layers=num_layers,
+                    hidden_size=self.hidden_size,
+                    num_layers=self.num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
 
@@ -69,9 +70,13 @@ class wordEncoder(nn.Module):
         """ See EncoderBase.forward() for description of args and returns."""
 
         emb = self.embeddings(input)
+        print(emb.size())
         s_len, batch, emb_dim = emb.size()
 
-        outputs, hidden_t = self.wordrnn(emb, hidden)
+        h0 = Variable(torch.randn(num_directions*self.num_layers, batch, self.hidden_size)).cuda()
+        c0 = Variable(torch.randn(num_directions*self.num_layers, batch, self.hidden_size)).cuda()
+
+        outputs, hidden_t = self.wordrnn(emb, (h0,c0))
         return hidden_t, outputs
 
 
@@ -86,18 +91,18 @@ class ConvEncoder(nn.Module):
         assert hidden_size % num_directions == 0
         hidden_size = hidden_size // num_directions
 
-        self.wordrnn = wordEncoder(rnn_type, bidirectional, num_layers, hidden_size, dropout, embeddings)
+        self.wordRNN = wordEncoder(rnn_type, bidirectional, num_layers, hidden_size, dropout, embeddings)
         if rnn_type == "SRU":
             # SRU doesn't support PackedSequence.
             self.convrnn = SRU.SRU(
-                    input_size=embeddings.embedding_size,
+                    input_size=hidden_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
                     dropout=dropout,
                     bidirectional=bidirectional)
         else:
             self.convrnn = getattr(nn, rnn_type)(
-                    input_size=embeddings.embedding_size,
+                    input_size=hidden_size,
                     hidden_size=hidden_size,
                     num_layers=num_layers,
                     dropout=dropout,
@@ -120,9 +125,12 @@ class ConvEncoder(nn.Module):
         """
         """ See EncoderBase.forward() for description of args and returns."""
         max_sents, batch_size, max_tokens = input.size()
+        print(input.size())
         s = None
         for i in range(max_sents):
-            _s, state_word = self.wordrnn(input[i,:,:].transpose(0,1), state_word)
+            this_input = input[i,:,:].transpose(0,1)
+            print(this_input.size())
+            _s, state_word = self.wordRNN(this_input, state_word)
             if(s is None):
                 s = _s
             else:

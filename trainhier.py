@@ -189,10 +189,10 @@ def main():
     print('Reading validation data: {}'.format(valfile))
     val = pd.read_json(valfile)
 
-    train_srs = train.context.values.tolist()[:500]
-    train_tgt = train.replies.values.tolist()[:500]
-    val_srs = val.context.values.tolist()[:500]
-    val_tgt = val.replies.values.tolist()[:500]
+    train_srs = train.context.values.tolist()[:200]
+    train_tgt = train.replies.values.tolist()[:200]
+    val_srs = val.context.values.tolist()[:200]
+    val_tgt = val.replies.values.tolist()[:200]
 
 
     src_vocab = hierdata.buildvocab(train_srs+val_srs)
