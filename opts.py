@@ -151,19 +151,19 @@ def train_opts(parser):
                         uses more memory.""")
     parser.add_argument('-epochs', type=int, default=13,
                         help='Number of training epochs')
-    parser.add_argument('-optim', default='sgd',
+    parser.add_argument('-optim', default='adam',
                         choices=['sgd', 'adagrad', 'adadelta', 'adam'],
                         help="""Optimization method.""")
     parser.add_argument('-max_grad_norm', type=float, default=5,
                         help="""If the norm of the gradient vector exceeds this,
                         renormalize it to have the norm equal to
                         max_grad_norm""")
-    parser.add_argument('-dropout', type=float, default=0.3,
+    parser.add_argument('-dropout', type=float, default=0.2,
                         help="Dropout probability; applied in LSTM stacks.")
     parser.add_argument('-truncated_decoder', type=int, default=0,
                         help="""Truncated bptt.""")
     # learning rate
-    parser.add_argument('-learning_rate', type=float, default=1.0,
+    parser.add_argument('-learning_rate', type=float, default=2e-4,
                         help="""Starting learning rate. If adagrad/adadelta/adam
                         is used, then this is the global learning rate.
                         Recommended settings: sgd = 1, adagrad = 0.1,

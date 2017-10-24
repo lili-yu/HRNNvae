@@ -196,17 +196,7 @@ def main():
     train_tgt = train.replies.values.tolist()
     val_srs = val.context.values.tolist()
     val_tgt = val.replies.values.tolist()
-
-
-    '''
-    train_srs0 = train.context.values.tolist()
-    train_tgt0 = train.replies.values.tolist()
-    train_srs = train_srs0[:300]
-    train_tgt = train_tgt0[:300]
-    val_srs = train_srs0[500:800]
-    val_tgt = train_tgt0[500:800]
-    '''
-
+    
     src_vocab = hierdata.buildvocab(train_srs+val_srs)
     tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
 
