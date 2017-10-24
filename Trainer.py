@@ -49,6 +49,7 @@ class VaeTrainer(object):
 
 
             self.model.zero_grad()
+            dec_state = None
 
             outputs,  dec_state, mu, logvar= \
                 self.model(src, tgt, dec_state)

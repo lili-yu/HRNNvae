@@ -4,6 +4,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+def aeq(*args):
+    """
+    Assert all arguments have the same value
+    """
+    arguments = (arg for arg in args)
+    first = next(arguments)
+    assert all(arg == first for arg in arguments), \
+        "Not all arguments have the same value: " + str(args)
+
 def deep_iter(x):
     if isinstance(x, list) or isinstance(x, tuple):
         for u in x:

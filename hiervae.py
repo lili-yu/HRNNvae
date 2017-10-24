@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import SRU
 import embeddings
+import embeddings_2
 
 def aeq(*args):
     """
@@ -120,7 +121,7 @@ class ConvEncoder(nn.Module):
         """ See EncoderBase.forward() for description of args and returns."""
         max_sents, batch_size, max_tokens = input.size()
         s = None
-        for i in xrange(max_sents):
+        for i in range(max_sents):
             _s, state_word = self.wordrnn(input[i,:,:].transpose(0,1), state_word)
             if(s is None):
                 s = _s
@@ -367,13 +368,13 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     """
     # Make encoder.
     opt=model_opt
-    src_embeddings = embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
+    src_embeddings = embeddings_2.EmbeddingLayer(model_opt.word_vec_size, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
     encoder = ConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
                           opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)
-
+    
 
     # Make decoder.
-    tgt_embeddings =  embeddings.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
+    tgt_embeddings =  embeddings_2.EmbeddingLayer(model_opt.word_vec_size, vocab=tgt_dict)
     decoder = RNNDecoder(opt.rnn_type, opt.brnn,
                              opt.dec_layers, opt.rnn_size,
                              opt.global_attention,
