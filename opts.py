@@ -1,5 +1,5 @@
 import argparse
-from SRU import CheckSRU
+#from SRU import CheckSRU
 
 
 def model_opts(parser):
@@ -64,7 +64,7 @@ def model_opts(parser):
 
     parser.add_argument('-rnn_type', type=str, default='LSTM',
                         choices=['LSTM', 'GRU', 'SRU'],
-                        action=CheckSRU,
+                        #action=CheckSRU,
                         help="""The gate type to use in the RNNs""")
     # parser.add_argument('-residual',   action="store_true",
     #                     help="Add residual connections between RNN layers.")

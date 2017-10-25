@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 import sys
 import numpy as np
-import SRU
+#import SRU
 import embeddings
 import embeddings_2
 

@@ -125,6 +125,8 @@ class GreedyDecoder(object):
                 for line in input_lines_trg
             ]
 
+            print(input_lines_trg)
+
             # Do the same for gold sentences
             output_lines_trg_gold = output_lines_trg_gold.data.cpu().numpy()
             output_lines_trg_gold = [
