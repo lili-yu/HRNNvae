@@ -128,8 +128,8 @@ def train_vae(model, train_iter, valid_iter, tgtvocab, optim):
 
         # 5. Drop a checkpoint if needed.
         
-        #if epoch >= opt.start_checkpoint_at:
-        #    trainer.drop_checkpoint(opt, epoch, fields, valid_stats)
+        if epoch >= opt.start_checkpoint_at:
+            trainer.drop_checkpoint(opt, epoch, valid_stats)
 
         train_loss.VAE_weightaneal(epoch)
         valid_loss.VAE_weightaneal(epoch)
@@ -183,7 +183,7 @@ def main():
     checkpoint = None
     dict_checkpoint = opt.train_from
 
-    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
+    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
     train = pd.read_json(trainfile)
     print('Read training data from: {}'.format(trainfile))
 
@@ -200,7 +200,7 @@ def main():
     src_vocab = hierdata.buildvocab(train_srs+val_srs)
     tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
 
-    mini_batch_size = 32
+    mini_batch_size = 24
     test_batch_size = 16
     train_iter = hierdata.gen_minibatch(train_srs, train_tgt,  mini_batch_size, src_vocab, tgt_vocab)
     valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)

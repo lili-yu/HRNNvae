@@ -103,7 +103,7 @@ class VaeTrainer(object):
         """ Called for each epoch to update learning rate. """
         return self.optim.updateLearningRate(ppl, epoch)
 
-    def drop_checkpoint(self, opt, epoch, fields, valid_stats):
+    def drop_checkpoint(self, opt, epoch, valid_stats):
         """ Called conditionally each epoch to save a snapshot. """
         real_model = (self.model.module
                       if isinstance(self.model, nn.DataParallel)
@@ -119,7 +119,7 @@ class VaeTrainer(object):
         checkpoint = {
             'model': model_state_dict,
             'generator': generator_state_dict,
-            'vocab': onmt.IO.ONMTDataset.save_vocab(fields),
+            #'vocab': onmt.IO.ONMTDataset.save_vocab(fields),
             'opt': opt,
             'epoch': epoch,
             'optim': self.optim
