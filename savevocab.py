@@ -11,7 +11,8 @@ import pandas as pd
 import hierdata
 
 import sys
-import ujson
+#import ujson
+import json
 
 print('starting')
 
@@ -39,11 +40,10 @@ def main():
     src = {'word2id':src_vocab, 'id2word':src_w}
     tgt = {'word2id':tgt_vocab, 'id2word':tgt_w}
 
-    with open('src.json', 'w') as outfile:
-        ujson.dumps(src, outfile)
-    with open('tgt.json', 'w') as outfile:
-        ujson.dumps(tgt, outfile)
-    
+    checkpoint = {
+                'src_word2id':src_vocab, 'src_id2word':src_w, 'tgt_word2id':tgt_vocab, 'tgt_id2word':tgt_w}
+    torch.save(checkpoint, 'vocabs.pt')
+                    
 
 if __name__ == "__main__":
     main()

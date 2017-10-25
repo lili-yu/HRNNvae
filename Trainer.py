@@ -44,7 +44,7 @@ class VaeTrainer(object):
 
             src = batch[0]
             tgt = batch[1]
-            
+            print(tgt.size())
 
             report_stats.n_src_words += len(src) #src_lengths.sum() #### To dooooo 
 

@@ -183,7 +183,11 @@ def main():
     checkpoint = None
     dict_checkpoint = opt.train_from
 
+
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
+    debug=True
+    if debug:
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
     train = pd.read_json(trainfile)
     print('Read training data from: {}'.format(trainfile))
 

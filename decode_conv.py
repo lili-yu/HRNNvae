@@ -14,6 +14,8 @@ import Loss
 import Trainer
 import Optim
 import sys
+import ujson
+import json
 
 print('starting')
 
@@ -75,21 +77,23 @@ class GreedyDecoder(object):
         #self.config['data']['max_trg_length']
         for i in range(50):
 
-
             outputs,  dec_state, mu, logvar= \
                 self.model(input_lines_src, input_lines_trg, dec_state)
-            word_probs = self.model.generator(outputs.view(-1, outputs.size(2)))
+            word_probs = self.model.generator(outputs)
+            #should have size of tgt_legth(=1), batchsize, vocabsize
 
             #decoder_logit = self.model(input_lines_src, input_lines_trg)
             #word_probs = self.model.decode(decoder_logit)
             decoder_argmax = word_probs.data.cpu().numpy().argmax(axis=-1)
+            #size of tgt_legth(=1), batchsize
+            print(decoder_argmax.size())
             next_preds = Variable(
-                torch.from_numpy(decoder_argmax[:, -1])
+                torch.from_numpy(decoder_argmax[-1, :])
             ).cuda()
 
             input_lines_trg = torch.cat(
-                (input_lines_trg, next_preds.unsqueeze(1)),
-                1
+                (input_lines_trg, next_preds.unsqueeze(0)),
+                0
             )
 
         return input_lines_trg
@@ -105,12 +109,13 @@ class GreedyDecoder(object):
             input_lines_src = Variable(input_lines_src.data, volatile=True)
             #output_lines_src = Variable(output_lines_src.data, volatile=True)
             input_lines_trg_gold = Variable(input_lines_trg_gold.data, volatile=True)
+            #sent_length, batchsize
             #output_lines_trg_gold = Variable(output_lines_trg_gold.data, volatile=True)
 
             input_lines_trg = Variable(torch.LongTensor(
                 [
                     [trg['word2id']['<agent__']]
-                    for i in xrange(input_lines_src.size(0))
+                    for i in range(input_lines_src.size(1))
                 ]
             ), volatile=True).cuda()
 
@@ -221,6 +226,31 @@ def read_config(file_path):
 
 
 def main():
+    rebuild_vocab = False
+    if rebuild_vocab:
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
+        train = pd.read_json(trainfile)
+        print('Read training data from: {}'.format(trainfile))
+
+        valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json'
+        val = pd.read_json(valfile)
+        print('Read validation data from: {}'.format(valfile))
+        train_srs = train.context.values.tolist()
+        train_tgt = train.replies.values.tolist()
+        val_srs = val.context.values.tolist()
+        val_tgt = val.replies.values.tolist()
+        src_vocab, _ = hierdata.buildvocab(train_srs+val_srs)
+        tgt_vocab, tgtwords = hierdata.buildvocab(train_tgt+val_tgt)
+
+    else:
+        print('load vocab from pt file')
+        dicts = torch.load('vocabs.pt')
+        #tgt = pd.read_json('./tgt.json')
+        #src = pd.read_json('./src.json')
+        src_vocab = dicts['src_word2id']
+        tgt_vocab = dicts['src_word2id']
+        tgtwords = dicts['tgt_id2word']
+
     opt = parser.parse_args()
 
     dummy_parser = argparse.ArgumentParser(description='train.py')
@@ -231,6 +261,7 @@ def main():
     if opt.cuda:
         torch.cuda.set_device(opt.gpu)
 
+
     testfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
     test = pd.read_json(testfile)
     print('Test training data from: {}'.format(testfile))
@@ -238,23 +269,12 @@ def main():
     test_srs = test.context.values.tolist()
     test_tgt = test.replies.values.tolist()
 
-    with open('src.json', 'r') as f:
-        src = ujson.load(f)
-    with open('tgt.json', 'r') as f:
-        tgt = ujson.load(f)
-
-    src_vocab = src['word2id']
-    tgt_vocab = tgt['word2id']
-    tgtwords = tgt['id2word']
-
-    #config = read_config(model_config)
-
     test_batch_size = 16
     test_iter = hierdata.gen_minibatch(test_srs, test_tgt,  test_batch_size, src_vocab, tgt_vocab)
 
     checkpoint = opt.model
     print('Building model...')
-    model = hiervae.make_base_model(opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
+    model = hiervae.make_base_model(opt, src_vocab, tgt_vocab, opt.cuda, checkpoint) ### Done  #### How to integrate the two embedding layers...
     print(model)
     tally_parameters(model)### Done 
 
