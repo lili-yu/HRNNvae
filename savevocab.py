@@ -7,12 +7,9 @@ import torch.nn as nn
 from torch import cuda
 import pandas as pd
 
-import hiervae
-import opts
+
 import hierdata
-import Loss
-import Trainer
-import Optim
+
 import sys
 import ujson
 
@@ -20,9 +17,7 @@ print('starting')
 
 
 def main():
-    global opt
-    checkpoint = None
-    dict_checkpoint = opt.train_from
+
 
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
     train = pd.read_json(trainfile)
