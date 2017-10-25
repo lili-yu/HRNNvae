@@ -9,6 +9,10 @@ data/*
 */*.DS_Store
 *.txt
 *.json
+<<<<<<< HEAD
+=======
+
+>>>>>>> 663590605f93d0df7818d02f14d276508cf7ef65
 # C extensions
 *.so
 

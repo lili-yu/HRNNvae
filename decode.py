@@ -14,25 +14,31 @@ from evaluate import get_bleu
 class GreedyDecoder(object):
     """Beam Search decoder."""
 
-    def __init__(self,model,test_srs, src_vocab, tgt_vocab):
+    def __init__(self,config, model,test_iter,test_tgt, src_vocab, tgt_vocab):
         """Initialize model."""
         self.src = test_srs
         self.trg = test_tgt
         self.src_dict = src_vocab
         self.tgt_dict = tgt_vocab
+        self.tgt_w = tgt_w
         self.model = model
+        self.config = config
 
     def decode_minibatch(
         self,
         input_lines_src,
-        input_lines_trg,
-        output_lines_trg_gold
+        input_lines_trg
     ):
         """Decode a minibatch."""
         for i in xrange(self.config['data']['max_trg_length']):
 
-            decoder_logit = self.model(input_lines_src, input_lines_trg)
-            word_probs = self.model.decode(decoder_logit)
+
+            outputs,  dec_state, mu, logvar= \
+                self.model(input_lines_src, input_lines_trg, dec_state)
+            word_probs = self.model.generator(outputs.view(-1, outputs.size(2)))
+
+            #decoder_logit = self.model(input_lines_src, input_lines_trg)
+            #word_probs = self.model.decode(decoder_logit)
             decoder_argmax = word_probs.data.cpu().numpy().argmax(axis=-1)
             next_preds = Variable(
                 torch.from_numpy(decoder_argmax[:, -1])
@@ -49,12 +55,28 @@ class GreedyDecoder(object):
         """Evaluate model."""
         preds = []
         ground_truths = []
-        for j in xrange(
-            0, len(self.src['data']),
-            self.config['data']['batch_size']
-        ):
+        for batch in self.iter:
+            input_lines_src = batch[0]
+            input_lines_trg_gold = batch[1]
 
-            print 'Decoding : %d out of %d ' % (j, len(self.src['data']))
+            input_lines_src = Variable(input_lines_src.data, volatile=True)
+            #output_lines_src = Variable(output_lines_src.data, volatile=True)
+            input_lines_trg_gold = Variable(input_lines_trg_gold.data, volatile=True)
+            #output_lines_trg_gold = Variable(output_lines_trg_gold.data, volatile=True)
+
+            input_lines_trg = Variable(torch.LongTensor(
+                [
+                    [trg['word2id']['<agent__']]
+                    for i in xrange(input_lines_src.size(0))
+                ]
+            ), volatile=True).cuda()
+
+            '''
+            for j in range(
+            0, len(self.src),
+             self.config['data']['batch_size']):
+
+            print 'Decoding : %d out of %d ' % (j, len(self.src))
             # Get source minibatch
             input_lines_src, output_lines_src, lens_src, mask_src = (
                 get_minibatch(
@@ -67,7 +89,6 @@ class GreedyDecoder(object):
 
             input_lines_src = Variable(input_lines_src.data, volatile=True)
             output_lines_src = Variable(output_lines_src.data, volatile=True)
-            mask_src = Variable(mask_src.data, volatile=True)
 
             # Get target minibatch
             input_lines_trg_gold, output_lines_trg_gold, lens_src, mask_src = (
@@ -82,6 +103,7 @@ class GreedyDecoder(object):
             input_lines_trg_gold = Variable(input_lines_trg_gold.data, volatile=True)
             output_lines_trg_gold = Variable(output_lines_trg_gold.data, volatile=True)
             mask_src = Variable(mask_src.data, volatile=True)
+            
 
             # Initialize target with <s> for every sentence
             input_lines_trg = Variable(torch.LongTensor(
@@ -90,24 +112,23 @@ class GreedyDecoder(object):
                     for i in xrange(input_lines_src.size(0))
                 ]
             ), volatile=True).cuda()
+            '''
 
             # Decode a minibatch greedily __TODO__ add beam search decoding
             input_lines_trg = self.decode_minibatch(
-                input_lines_src, input_lines_trg,
-                output_lines_trg_gold
-            )
+                input_lines_src, input_lines_trg)
 
             # Copy minibatch outputs to cpu and convert ids to words
             input_lines_trg = input_lines_trg.data.cpu().numpy()
             input_lines_trg = [
-                [self.trg['id2word'][x] for x in line]
+                [self.tgt_w[x] for x in line]
                 for line in input_lines_trg
             ]
 
             # Do the same for gold sentences
             output_lines_trg_gold = output_lines_trg_gold.data.cpu().numpy()
             output_lines_trg_gold = [
-                [self.trg['id2word'][x] for x in line]
+                [self.tgt_w[x] for x in line]
                 for line in output_lines_trg_gold
             ]
 
