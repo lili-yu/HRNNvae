@@ -33,13 +33,16 @@ def main():
     val_srs = val.context.values.tolist()
     val_tgt = val.replies.values.tolist()
     
-    src_vocab = hierdata.buildvocab(train_srs+val_srs)
-    tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
+    src_vocab, src_w = hierdata.buildvocab(train_srs+val_srs)
+    tgt_vocab, tgt_w = hierdata.buildvocab(train_tgt+val_tgt)
 
-    with open('src_vocab.json', 'w') as outfile:
-        ujson.dumps(src_vocab, outfile)
-    with open('tgt_vocab.json', 'w') as outfile:
-        ujson.dumps(tgt_vocab, outfile)
+    src = {'word2id':src_vocab, 'id2word':src_w}
+    tgt = {'word2id':tgt_vocab, 'id2word':tgt_w}
+
+    with open('src.json', 'w') as outfile:
+        ujson.dumps(src, outfile)
+    with open('tgt.json', 'w') as outfile:
+        ujson.dumps(tgt, outfile)
     
 
 if __name__ == "__main__":

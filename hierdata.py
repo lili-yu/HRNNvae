@@ -26,18 +26,24 @@ def deep_iter(x):
 def buildvocab(words, oov='<oov>', pad='<pad>', min_freq=0, MAX_vocab_size = 50000):
     counter = Counter()
     word2id = {}
+    id2word =[]
     word2id[pad] = len(word2id)
+    id2word.append(pad)
     word2id[oov] = len(word2id)
+    id2word.append(oov)
     for w in deep_iter(words):
         counter.update([w])
+        
     print("Total words before filtering is: {}".format(len(counter.items())))
     words_and_frequencies = sorted(counter.items(), key=lambda tup: tup[1], reverse=True)
     for word, freq in words_and_frequencies:
         if  len(word2id) == MAX_vocab_size:
             break
         word2id[word] = len(word2id)
+        id2word.append(word)
+        assert len(id2word) == len(word2id)
     print("The vocab size is: {}".format(len(word2id)))
-    return word2id
+    return word2id, id2word
 
 
 

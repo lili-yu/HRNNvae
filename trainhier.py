@@ -197,8 +197,8 @@ def main():
     val_srs = val.context.values.tolist()
     val_tgt = val.replies.values.tolist()
     
-    src_vocab = hierdata.buildvocab(train_srs+val_srs)
-    tgt_vocab = hierdata.buildvocab(train_tgt+val_tgt)
+    src_vocab, _ = hierdata.buildvocab(train_srs+val_srs)
+    tgt_vocab, _ = hierdata.buildvocab(train_tgt+val_tgt)
 
     mini_batch_size = 24
     test_batch_size = 16
