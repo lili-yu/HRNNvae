@@ -8,6 +8,8 @@ def model_opts(parser):
     Be careful with these as they will be used during translation.
     """
     # Model options
+    parser.add_argument('-model',
+                    help='Path to model .pt file')
     parser.add_argument('-model_type', default='text',
                         help="Type of encoder to use. Options are [text|img].")
     parser.add_argument('-z_size', type=int, default=100,

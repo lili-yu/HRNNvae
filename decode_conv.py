@@ -23,7 +23,7 @@ print('starting')
 parser = argparse.ArgumentParser(description='translate.py')
 opts.add_md_help_argument(parser)
 
-parser.add_argument('-model', required=True,
+parser.add_argument('-model', 
                     help='Path to model .pt file')
 parser.add_argument('-src',   required=False,
                     help='Source sequence to decode (one line per sequence)')
@@ -251,15 +251,21 @@ def main():
         tgt_vocab = dicts['src_word2id']
         tgtwords = dicts['tgt_id2word']
 
+    
+    parser = argparse.ArgumentParser(description='train.py')
+
+    # opts.py
+    opts.add_md_help_argument(parser)
+    opts.model_opts(parser)
+    opts.train_opts(parser)
     opt = parser.parse_args()
 
-    dummy_parser = argparse.ArgumentParser(description='train.py')
-    opts.model_opts(dummy_parser)
-    dummy_opt = dummy_parser.parse_known_args([])[0]
 
-    opt.cuda = opt.gpu > -1
+    dummy_opt = parser.parse_known_args([])[0]
+
+    opt.cuda = opt.gpuid[0] > -1
     if opt.cuda:
-        torch.cuda.set_device(opt.gpu)
+        torch.cuda.set_device(opt.gpuid[0])
 
 
     testfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'

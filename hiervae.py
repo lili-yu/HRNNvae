@@ -397,7 +397,8 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     # Load the model states from checkpoint or initialize them.
     if checkpoint is not None:
         print('Loading model parameters.')
-        model.load_state_dict(checkpoint['model'])
+        checkpoint = torch.load(checkpoint)
+        model.load_state_dict(checkpoint.get('model'))
         generator.load_state_dict(checkpoint['generator'])
     else:
         if model_opt.param_init != 0.0:
