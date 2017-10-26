@@ -187,7 +187,8 @@ class GreedyDecoder(object):
                 for line in input_lines_trg
             ]
 
-            print(' '.join(input_lines_trg))
+            print(' '.join(input_lines_trg[:,1]))
+            print(' '.join(input_lines_trg[:,2]))
 
             '''
 
