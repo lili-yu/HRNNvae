@@ -181,19 +181,26 @@ class GreedyDecoder(object):
                 input_lines_src, input_lines_trg)
 
             # Copy minibatch outputs to cpu and convert ids to words
-            input_lines_trg = input_lines_trg.data.cpu().numpy()
+            input_lines_trg = input_lines_trg.data.cpu().numpy().transpose()
             input_lines_trg = [
                 [self.tgt_w[x] for x in line]
                 for line in input_lines_trg
             ]
+            print('\ntranslated')
+            print(' '.join(input_lines_trg[1]))
+            #print(' '.join(input_lines_trg[2]))
 
-            print(' '.join(input_lines_trg[:,1]))
-            print(' '.join(input_lines_trg[:,2]))
-
+            real = input_lines_trg_gold.data.cpu().numpy().transpose()
+            real = [
+                [self.tgt_w[x] for x in line]
+                for line in real]
+            print("real:")
+            print(' '.join(real[1]))
+            #print(' '.join(real[2]))
             '''
 
             # Do the same for gold sentences
-            output_lines_trg_gold = output_lines_trg_gold.data.cpu().numpy()
+            output_lines_trg_gold = output_lines_trg_gold.data.cpu().numpy().transpose()
             output_lines_trg_gold = [
                 [self.tgt_w[x] for x in line]
                 for line in output_lines_trg_gold
@@ -222,6 +229,22 @@ class GreedyDecoder(object):
         print 'BLEU score : %.5f ' % (bleu_score)
         '''
 
+def build_optim(model, checkpoint):
+    if opt.train_from:
+        print('Loading optimizer from checkpoint.')
+        optim = checkpoint['optim']
+        optim.optimizer.load_state_dict(
+            checkpoint['optim'].optimizer.state_dict())
+    else:
+        # what members of opt does Optim need?
+        optim = Optim.Optim(
+            opt.optim, opt.learning_rate, opt.max_grad_norm,
+            lr_decay=opt.learning_rate_decay,
+            start_decay_at=opt.start_decay_at,
+            opt=opt
+        )
+    optim.set_parameters(model.parameters())
+    return optim
 
 def loadVOCAB():
     with open('src.json', 'r') as f:
@@ -306,6 +329,20 @@ def main():
 
     test_batch_size = 16
     test_iter = hierdata.gen_minibatch(test_srs, test_tgt,  test_batch_size, src_vocab, tgt_vocab)
+
+
+    tgtvocab = tgt_vocab
+    
+    optim = Optim.Optim(
+            'adam', 1e-3
+        )
+    train_loss = Loss.VAELoss(model.generator,  tgtvocab)
+    valid_loss = Loss.VAELoss(model.generator,  tgtvocab)
+    trainer = Trainer.VaeTrainer(model, test_iter, test_iter,
+                       train_loss, valid_loss, optim)
+    valid_stats = trainer.validate()
+    print('Validation perplexity: %g' % valid_stats.ppl())
+    print('Validation accuracy: %g' % valid_stats.accuracy())
 
 
     # Do training.
