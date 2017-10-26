@@ -44,7 +44,7 @@ class VaeTrainer(object):
 
             src = batch[0]
             tgt = batch[1]
-            print(tgt.size())
+            batchsize = tgt.size()[1]
 
             report_stats.n_src_words += len(src) #src_lengths.sum() #### To dooooo 
 
@@ -59,7 +59,7 @@ class VaeTrainer(object):
             
             loss, stats = self.train_loss.compute_loss(outputs, tgt, mu, logvar)
             #def compute_loss(self, batch, output, target, m, l, **kwargs):
-            loss.div(len(batch)).backward()
+            loss.div(batchsize).backward()
             batch_stats.update(stats)
 
 

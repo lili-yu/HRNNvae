@@ -20,7 +20,7 @@ print('starting')
 def main():
 
 
-    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
+    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
     train = pd.read_json(trainfile)
     print('Read training data from: {}'.format(trainfile))
 
@@ -42,7 +42,7 @@ def main():
 
     checkpoint = {
                 'src_word2id':src_vocab, 'src_id2word':src_w, 'tgt_word2id':tgt_vocab, 'tgt_id2word':tgt_w}
-    torch.save(checkpoint, 'vocabs.pt')
+    torch.save(checkpoint, 'test_vocabs.pt')
                     
 
 if __name__ == "__main__":

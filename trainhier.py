@@ -183,26 +183,44 @@ def main():
     checkpoint = None
     dict_checkpoint = opt.train_from
 
+    #data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
 
-    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.json'
     debug=True
+
+    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.pt' 
     if debug:
-        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.json'
-    train = pd.read_json(trainfile)
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v_debug.pt'
+    train = torch.load(trainfile)
     print('Read training data from: {}'.format(trainfile))
 
 
-    valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.json'
-    val = pd.read_json(valfile)
+    valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.pt'
+    if debug:
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v_debug.pt'
+    val = torch.load(valfile)
     print('Read validation data from: {}'.format(valfile))
 
-    train_srs = train.context.values.tolist()
-    train_tgt = train.replies.values.tolist()
-    val_srs = val.context.values.tolist()
-    val_tgt = val.replies.values.tolist()
-    
-    src_vocab, _ = hierdata.buildvocab(train_srs+val_srs)
-    tgt_vocab, _ = hierdata.buildvocab(train_tgt+val_tgt)
+    train_srs = train['context']
+    train_tgt = train['replies']
+    val_srs = val['context']
+    val_tgt = val['replies']
+
+    if debug:
+        print('load vocab from pt file')
+        dicts = torch.load('test_vocabs.pt')
+        #tgt = pd.read_json('./tgt.json')
+        #src = pd.read_json('./src.json')
+        src_vocab = dicts['src_word2id']
+        tgt_vocab = dicts['tgt_word2id']
+        tgtwords = dicts['tgt_id2word']
+        print('source vocab size: {}'.format(len(src_vocab)))
+        print('source vocab test, bill: {} , {}'.format(src_vocab['<pad>'],src_vocab['bill'] ))
+        print('target vocab size: {}'.format(len(tgt_vocab)))
+        print('target vocab test, bill: {}, {}'.format(tgt_vocab['<pad>'],tgt_vocab['bill'] ))
+
+    else:
+        src_vocab, _ = hierdata.buildvocab(train_srs+val_srs)
+        tgt_vocab, _ = hierdata.buildvocab(train_tgt+val_tgt)
 
     mini_batch_size = 24
     test_batch_size = 16

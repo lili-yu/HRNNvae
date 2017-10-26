@@ -19,7 +19,7 @@ class VAELoss(nn.Module):
 
         self.generator = generator
         self.tgt_vocab = tgt_vocab
-        self.padding_idx = 0 #tgt_vocab.stoi[onmt.IO.PAD_WORD]   ########To do 
+        self.padding_idx = tgt_vocab['<pad>'] #tgt_vocab.stoi[onmt.IO.PAD_WORD]   ########To do 
 
         weight = torch.ones(len(tgt_vocab)).cuda()
         weight[self.padding_idx] = 0
@@ -40,7 +40,8 @@ class VAELoss(nn.Module):
         scores = self.generator(self.bottle(output))
         scores_data = scores.data.clone()
 
-        
+        #print(target[:,0] )
+        #print(target[:,1] )
         target = target.view(-1)
         target_data = target.data.clone()
 
@@ -48,6 +49,10 @@ class VAELoss(nn.Module):
         loss = self.criterion(scores, target)
         loss_data = loss.data.clone()
 
+        '''print("scores: {}".format(scores[:10]))
+        print("target: {}".format(target[:10]))
+        print("loss: {}".format(loss))
+        '''
         KLD = (-0.5 * torch.sum(l - torch.pow(m, 2) - torch.exp(l) + 1, 1)).mean().squeeze()
         #print(KLD.size())
         KLDloss = KLD * self.kld_weight
@@ -82,9 +87,20 @@ class VAELoss(nn.Module):
         """
         pred = scores.max(1)[1]
         non_padding = target.ne(self.padding_idx)
+
+        '''
+        print('soresize: {}'.format(scores.size()))
+        print('pred: {}'.format(pred.size()))
+        print('target: {}'.format(target.size()))
+        print('target: {}'.format(target[-100:-80]))
+        print(non_padding[-100:-80])
+        '''
+
         num_correct = pred.eq(target) \
                           .masked_select(non_padding) \
                           .sum()
+        #print('words: {}'.format(non_padding.sum()))
+        #print('correct: {}'.format(num_correct))
         return Statistics(loss[0], KLD, non_padding.sum(), num_correct)
 
     def bottle(self, v):

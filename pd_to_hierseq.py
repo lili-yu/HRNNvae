@@ -8,7 +8,7 @@ import numpy as np
 import json
 import argparse
 import json
-
+import torch
 '''
 Change of this file. 
 1. simplify the preprocessing process
@@ -158,11 +158,11 @@ def load_conversations(csv_file='/D/data/autosuggest_data/cc/cc_20170204/'):
 
 
 def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_starts_turnn=6 ):
-    conversation_begin_symbol = " __SOC__ "
-    customer_begin_symbol = "<cus__ "
-    customer_end_symbol = " __cus>"
-    agent_begin_symbol = "<agent__ "
-    agent_end_symbol = " __agent>"
+    conversation_begin_symbol = "__SOC__"
+    customer_begin_symbol = "<cus__"
+    customer_end_symbol = "__cus>"
+    agent_begin_symbol = "<agent__"
+    agent_end_symbol = "__agent>"
 
     indicator = file.split('_')[0]
     #fileout = args.dir+indicator+'_v'+args.version
@@ -252,10 +252,13 @@ def conversation_save(data1, file, args,  MAX_wps = 50, MAX_turn =50, saving_sta
         old_id = new_id
         last_speaker = this_speaker
 
-    filename=args.outdir +'/'+ 'conv-'+indicator+'_v'+args.version+'.json'
+    filename=args.outdir +'/'+ 'conv-'+indicator+'_v'+args.version+'.pt'
     data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
-    with open(filename, 'w') as outfile:
-        json.dump(data, outfile)
+    torch.save(data, filename)
+
+    filename2=args.outdir +'/'+ 'conv-'+indicator+'_v'+args.version+'_debug.pt'
+    data_debug = {'context':conversation[:200], 'replies':replies[:200], 'speaker':all_speaker[:200], 'conv_turns':all_turn[:200]}
+    torch.save(data_debug, filename2)
 
     print('In total {} conversations'.format(conv_n))
     print('Built {} seq-to-seq pairs'.format(pairn))
