@@ -10,7 +10,7 @@ import sys
 import numpy as np
 #import SRU
 import embeddings
-import embeddings_2
+#import embeddings_2
 
 def aeq(*args):
     """

@@ -42,6 +42,7 @@ class VAELoss(nn.Module):
 
         #print(target[:,0] )
         #print(target[:,1] )
+        target = target[1:]
         target = target.view(-1)
         target_data = target.data.clone()
 
@@ -94,10 +95,11 @@ class VAELoss(nn.Module):
         print('target: {}'.format(target.size()))
         print('target: {}'.format(target[-100:-80]))
         print(non_padding[-100:-80])
-        '''
+        
         print('\n sampling the result')
         print('pred: {}'.format(pred[-100:-80]))
         print('target: {}'.format(target[-100:-80]))
+        '''
 
         num_correct = pred.eq(target) \
                           .masked_select(non_padding) \

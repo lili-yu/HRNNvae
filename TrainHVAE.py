@@ -7,9 +7,10 @@ import torch.nn as nn
 from torch import cuda
 import pandas as pd
 
-import hiervae
+import ModelHVAE
+
 import opts
-import hierdata
+import data_util
 import Loss
 import Trainer
 import Optim
@@ -185,9 +186,13 @@ def main():
 
     #data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
 
-    debug=True
+    debug = False
+    smallset = False
 
+    print('\nLoading data')
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.pt' 
+    if smallset:
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.pt'
     if debug:
         trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v_debug.pt'
     train = torch.load(trainfile)
@@ -205,31 +210,31 @@ def main():
     val_srs = val['context']
     val_tgt = val['replies']
 
+    if smallset:
+        vocab_data = 'test_vocabs.pt'
     if debug:
-        print('load vocab from pt file')
-        dicts = torch.load('test_vocabs.pt')
-        #tgt = pd.read_json('./tgt.json')
-        #src = pd.read_json('./src.json')
-        src_vocab = dicts['src_word2id']
-        tgt_vocab = dicts['tgt_word2id']
-        tgtwords = dicts['tgt_id2word']
-        print('source vocab size: {}'.format(len(src_vocab)))
-        print('source vocab test, bill: {} , {}'.format(src_vocab['<pad>'],src_vocab['bill'] ))
-        print('target vocab size: {}'.format(len(tgt_vocab)))
-        print('target vocab test, bill: {}, {}'.format(tgt_vocab['<pad>'],tgt_vocab['bill'] ))
-
+        vocab_data = 'debug_vocabs.pt'
     else:
-        src_vocab, _ = hierdata.buildvocab(train_srs+val_srs)
-        tgt_vocab, _ = hierdata.buildvocab(train_tgt+val_tgt)
+        vocab_data = 'vocabs.pt'
+    print('\nload vocab from pt file: {}'.format(vocab_data))
+    dicts = torch.load(vocab_data)
+    src_vocab = dicts['src_word2id']
+    tgt_vocab = dicts['tgt_word2id']
+    tgtwords = dicts['tgt_id2word']
+    print('source vocab size: {}'.format(len(src_vocab)))
+    print('source vocab <pad>, bill: {} , {}'.format(src_vocab['<pad>'],src_vocab['bill'] ))
+    print('target vocab size: {}'.format(len(tgt_vocab)))
+    print('target vocab <pad>, bill: {}, {}'.format(tgt_vocab['<pad>'],tgt_vocab['bill'] ))
+
 
     mini_batch_size = 24
     test_batch_size = 16
-    train_iter = hierdata.gen_minibatch(train_srs, train_tgt,  mini_batch_size, src_vocab, tgt_vocab)
-    valid_iter = hierdata.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)
+    train_iter = data_util.gen_minibatch(train_srs, train_tgt,  mini_batch_size, src_vocab, tgt_vocab)
+    valid_iter = data_util.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)
 
 
     print('Building model...')
-    model = hiervae.make_base_model(opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
+    model = ModelHVAE.make_base_model(opt, src_vocab, tgt_vocab, use_gpu(opt), checkpoint) ### Done  #### How to integrate the two embedding layers...
     print(model)
     tally_parameters(model)### Done 
     check_save_model_path() ### Done
