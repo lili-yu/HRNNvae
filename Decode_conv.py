@@ -8,9 +8,9 @@ from torch.autograd import Variable
 from torch import cuda
 import pandas as pd
 
-import hiervae
+import ModelHVAE
 import opts
-import hierdata
+import data_util
 import Loss
 import Trainer
 import Optim
@@ -315,7 +315,7 @@ def main():
 
     checkpoint = opt.model
     print('Building model...')
-    model = hiervae.make_base_model(opt, src_vocab, tgt_vocab, opt.cuda, checkpoint) ### Done  #### How to integrate the two embedding layers...
+    model = ModelHVAE.make_base_model(opt, src_vocab, tgt_vocab, opt.cuda, checkpoint) ### Done  #### How to integrate the two embedding layers...
     print(model)
     tally_parameters(model)### Done 
 
@@ -328,7 +328,7 @@ def main():
     test_tgt = test.replies.values.tolist()
 
     test_batch_size = 16
-    test_iter = hierdata.gen_minibatch(test_srs, test_tgt,  test_batch_size, src_vocab, tgt_vocab)
+    test_iter = data_util.gen_minibatch(test_srs, test_tgt,  test_batch_size, src_vocab, tgt_vocab)
 
 
     tgtvocab = tgt_vocab

@@ -190,18 +190,18 @@ def main():
     smallset = False
 
     print('\nLoading data')
-    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v.pt' 
+    trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_sorted.pt' 
     if smallset:
-        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_v.pt'
+        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_sorted.pt'
     if debug:
         trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v_debug.pt'
     train = torch.load(trainfile)
     print('Read training data from: {}'.format(trainfile))
 
 
-    valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v.pt'
+    valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_sorted.pt'
     if debug:
-        trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v_debug.pt'
+        valfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-val_v_debug.pt'
     val = torch.load(valfile)
     print('Read validation data from: {}'.format(valfile))
 

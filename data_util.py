@@ -116,6 +116,37 @@ def gen_minibatch(srs, tgt, mini_batch_size, src_vocab, tgt_vocab, shuffle= True
     return batches
 
 
+def sort_data(src, tgt):
+    ssize = []
+    sent_cout =[]
+    word_count = []
+    for i, conversation in enumerate(src):
+        sent_l = len(conversation)
+        max_token_l = np.max([len(utter) for utter in conversation])
+        ssize.append([i, sent_l, max_token_l])
+    sort_s = sorted(ssize, key = lambda x: (x[1], x[2]))
+    print('Short:')
+    print(sort_s[:10])
+
+    print('Long:')
+    print(sort_s[-10:])
+
+    perm = [sort_s[i][0] for i in range(len(ssize))]
+    sort_src = [src[i] for i in perm]
+    sort_tgt = [tgt[i] for i in perm]
+    return sort_src, sort_tgt
+
+def sort_file(filename):
+    data = torch.load(filename)
+    print('Read training data from: {}'.format(filename))
+
+    data_srs = data['context']
+    data_tgt = data['replies']
+    
+    return sort_data(data_srs , data_tgt)
+
+
+
 '''
 # In[9]:
 

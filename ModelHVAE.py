@@ -343,7 +343,7 @@ class VaeModel(nn.Module):
                                       Init hidden state
         """
         src = src
-        #tgt = tgt[:-1]  # exclude last target from inputs  ##########?????????/????????
+        tgt = tgt[:-1]  # exclude last target from inputs  ##########?????????/????????
         context, z,  mu, logvar = self.encoder(src)
         #enc_z = self.z2h(z)
         enc_z = self.z2h(z).unsqueeze(0).repeat(self.n_layers, 1, 1)
