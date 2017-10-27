@@ -334,7 +334,7 @@ def main():
     tgtvocab = tgt_vocab
     
     optim = Optim.Optim(
-            'adam', 1e-3
+            'adam', 1e-3, 5
         )
     train_loss = Loss.VAELoss(model.generator,  tgtvocab)
     valid_loss = Loss.VAELoss(model.generator,  tgtvocab)
@@ -346,8 +346,8 @@ def main():
 
 
     # Do training.
-    decoder = GreedyDecoder(model,test_iter, src_vocab, tgt_vocab, tgtwords ) #model,test_iter,test_tgt, src_vocab, tgt_vocab
-    decoder.translate()
+    #decoder = GreedyDecoder(model,test_iter, src_vocab, tgt_vocab, tgtwords ) #model,test_iter,test_tgt, src_vocab, tgt_vocab
+    #decoder.translate()
 
 
 if __name__ == "__main__":

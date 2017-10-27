@@ -95,6 +95,9 @@ class VAELoss(nn.Module):
         print('target: {}'.format(target[-100:-80]))
         print(non_padding[-100:-80])
         '''
+        print('\n sampling the result')
+        print('pred: {}'.format(pred[-100:-80]))
+        print('target: {}'.format(target[-100:-80]))
 
         num_correct = pred.eq(target) \
                           .masked_select(non_padding) \
