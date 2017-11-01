@@ -187,13 +187,15 @@ def main():
     #data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
 
     debug = False
-    smallset = False
+    smallset = True
 
     print('\nLoading data')
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_sorted.pt' 
     if smallset:
+        print('using small data set')
         trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-test_sorted.pt'
-    if debug:
+    elif debug:
+        print('debuggggging')
         trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_v_debug.pt'
     train = torch.load(trainfile)
     print('Read training data from: {}'.format(trainfile))
@@ -212,7 +214,7 @@ def main():
 
     if smallset:
         vocab_data = 'test_vocabs.pt'
-    if debug:
+    elif debug:
         vocab_data = 'debug_vocabs.pt'
     else:
         vocab_data = 'vocabs.pt'
@@ -227,7 +229,7 @@ def main():
     print('target vocab <pad>, bill: {}, {}'.format(tgt_vocab['<pad>'],tgt_vocab['bill'] ))
 
 
-    mini_batch_size = 24
+    mini_batch_size = 32
     test_batch_size = 16
     train_iter = data_util.gen_minibatch(train_srs, train_tgt,  mini_batch_size, src_vocab, tgt_vocab)
     valid_iter = data_util.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)

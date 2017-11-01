@@ -71,19 +71,16 @@ class wordEncoder(nn.Module):
 
         emb = self.embeddings(input)
         s_len, batch, emb_dim = emb.size()
-        h0 = Variable(torch.zeros(self.num_directions*self.num_layers, batch, self.hidden_size)).cuda()
-        c0 = Variable(torch.zeros(self.num_directions*self.num_layers, batch, self.hidden_size)).cuda()
-
-        outputs, hidden_t = self.wordrnn(emb, (h0,c0))
+        outputs, hidden_t = self.wordrnn(emb, hidden)
         return outputs, hidden_t
 
 
 
-class ConvEncoder(nn.Module):
+class VConvEncoder(nn.Module):
 
     def __init__(self, rnn_type, bidirectional, num_layers,
                  hidden_size, dropout, embeddings, z_size):
-        super(ConvEncoder, self).__init__()
+        super(VConvEncoder, self).__init__()
 
         num_directions = 2 if bidirectional else 1
         assert hidden_size % num_directions == 0
@@ -374,7 +371,7 @@ def make_base_model(model_opt, src_dict, tgt_dict, gpu, checkpoint=None):
     # Make encoder.
     opt=model_opt
     src_embeddings = embeddings.EmbeddingLayer(100, vocab=src_dict) #,embs = dataloader.load_embedding(args.embedding))
-    encoder = ConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
+    encoder = VConvEncoder(opt.rnn_type, opt.brnn, opt.dec_layers,
                           opt.rnn_size, opt.dropout, src_embeddings, opt.z_size)   
 
     # Make decoder.
