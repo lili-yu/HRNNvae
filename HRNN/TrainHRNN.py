@@ -184,7 +184,7 @@ def main():
     #data = {'context':conversation, 'replies':replies, 'speaker':all_speaker, 'conv_turns':all_turn}
 
     debug = False
-    smallset = True
+    smallset = False
 
     print('\nLoading data')
     trainfile='/D/home/lili/mnt/DATA/convaws/convdata/conv-train_sorted.pt' 
@@ -226,8 +226,8 @@ def main():
     print('target vocab <pad>, bill: {}, {}'.format(tgt_vocab['<pad>'],tgt_vocab['bill'] ))
 
 
-    mini_batch_size = 32
-    test_batch_size = 16
+    mini_batch_size = opts.batch_size 
+    test_batch_size = opts.batch_size 
     train_iter = data_util.gen_minibatch(train_srs, train_tgt,  mini_batch_size, src_vocab, tgt_vocab)
     valid_iter = data_util.gen_minibatch(val_srs, val_tgt, test_batch_size, src_vocab, tgt_vocab)
 
