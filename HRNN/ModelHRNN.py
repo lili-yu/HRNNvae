@@ -124,7 +124,7 @@ class ConvEncoder(nn.Module):
             if(s is None):
                 s = _s
             else:
-                s = torch.cat((s,_s),0)      
+                s = torch.cat((s,_s[-1]),0)      
 
         outputs_sent, hidden_sent  = self.convrnn(s, hidden_sent )
 
